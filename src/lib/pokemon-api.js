@@ -1,17 +1,19 @@
 /**
- * Direct Pokemon API interaction functions
+ * Direct PokeAPI interaction utilities with fallback handling
  */
 
-// Fallback image constants
+// Fallback image URLs
 export const POKE_BALL =
     "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png";
 export const MASTER_BALL =
     "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/master-ball.png";
 
 /**
- * Fetches Pokemon data from PokeAPI
+ * Fetches and formats Pokemon data from PokeAPI
+ *
  * @param {string|number} pokemonIdOrName - Pokemon ID or name
- * @returns {Promise<object>} - Formatted Pokemon data
+ * @returns {Promise<object>} - Formatted Pokemon data with id, name, weight, height, and types
+ * @throws {Error} When API request fails or returns invalid data
  */
 export const fetchPokemon = async (pokemonIdOrName) => {
     try {
@@ -55,14 +57,15 @@ export const fetchPokemon = async (pokemonIdOrName) => {
             `Error fetching Pokémon data for '${pokemonIdOrName}':`,
             error
         );
-        throw error;
+        throw error; // Rethrow for proper error handling upstream
     }
 };
 
 /**
- * Fetches Pokemon image with fallbacks
+ * Fetches Pokemon image with fallbacks to default images
+ *
  * @param {string} pokemonName - Pokemon name
- * @returns {Promise<string>} - URL to the Pokemon's image
+ * @returns {Promise<string>} - URL to the Pokemon's image (or fallback)
  */
 export const fetchPokemonImage = async (pokemonName) => {
     try {
@@ -72,23 +75,20 @@ export const fetchPokemonImage = async (pokemonName) => {
         }
 
         const cleanName = pokemonName.toLowerCase().trim();
-
         const response = await fetch(
             `https://pokeapi.co/api/v2/pokemon/${cleanName}`
         );
 
         if (!response.ok) {
             console.warn(
-                `Failed to fetch image for Pokémon ${pokemonName}: ${response.status}`
+                `Failed to fetch image for ${pokemonName}: ${response.status}`
             );
             return POKE_BALL;
         }
 
         const contentType = response.headers.get("content-type");
         if (!contentType || !contentType.includes("application/json")) {
-            console.warn(
-                `Invalid response format when fetching image: ${contentType}`
-            );
+            console.warn(`Invalid response format: ${contentType}`);
             return POKE_BALL;
         }
 
@@ -101,10 +101,7 @@ export const fetchPokemonImage = async (pokemonName) => {
             POKE_BALL
         );
     } catch (error) {
-        console.error(
-            `Error fetching image for Pokémon ${pokemonName}:`,
-            error
-        );
+        console.error(`Error fetching image for ${pokemonName}:`, error);
         return POKE_BALL; // Return default image on error
     }
 };

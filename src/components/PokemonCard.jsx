@@ -19,8 +19,15 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
+/**
+ * Renders a Pokemon card with dynamic styling based on Pokemon types
+ *
+ * @param {Object} pokemon - Optional pre-loaded Pokemon data object
+ * @param {string|number} pokemonIdOrName - Pokemon ID or name to fetch data for
+ * @param {number} typeCount - Optional override for number of types to display (default: actual type count)
+ */
 const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
-    // State management for the component
+    // UI and data states
     const [isHovered, setIsHovered] = useState(false);
     const [pokemonData, setPokemonData] = useState(pokemon || null);
     const [imageUrl, setImageUrl] = useState(null);
@@ -28,22 +35,19 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
     const [isLoadingImage, setIsLoadingImage] = useState(true);
     const [error, setError] = useState(false);
 
-    // Effect to fetch Pokemon data if ID or name is provided
+    // Fetch Pokemon data if not provided directly
     useEffect(() => {
-        // If pokemon object is provided directly, use that
         if (pokemon) {
             setPokemonData(pokemon);
             setIsLoadingData(false);
             return;
         }
 
-        // If no ID/name provided, do nothing
         if (!pokemonIdOrName) {
             setIsLoadingData(false);
             return;
         }
 
-        // Fetch pokemon data using service
         const loadPokemonData = async () => {
             setIsLoadingData(true);
             setError(false);
@@ -51,10 +55,10 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
             try {
                 const data = await getPokemon(pokemonIdOrName);
                 setPokemonData(data);
-                setIsLoadingData(false);
             } catch (error) {
                 console.error("Error fetching Pokémon data:", error);
                 setError(true);
+            } finally {
                 setIsLoadingData(false);
             }
         };
@@ -62,7 +66,7 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
         loadPokemonData();
     }, [pokemon, pokemonIdOrName]);
 
-    // Effect to fetch Pokemon image once we have data
+    // Fetch Pokemon image once we have data
     useEffect(() => {
         if (!pokemonData) {
             setIsLoadingImage(false);
@@ -75,10 +79,10 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
             try {
                 const imageSource = await getPokemonImage(pokemonData.name);
                 setImageUrl(imageSource);
-                setIsLoadingImage(false);
             } catch (error) {
                 console.error("Error fetching Pokemon image:", error);
-                setImageUrl(POKE_BALL);
+                setImageUrl(POKE_BALL); // Fallback to default image
+            } finally {
                 setIsLoadingImage(false);
             }
         };
@@ -86,12 +90,12 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
         loadPokemonImage();
     }, [pokemonData]);
 
-    // Handle loading state
+    // Render loading state
     if (isLoadingData) {
         return (
             <Card
                 data-slot="card"
-                className="w-[300px] h-[480px] rounded-[20px] p-5 bg-gray-800 flex items-center justify-center border-0"
+                className="w-[300px] h-[480px] rounded-xl p-5 bg-gray-800 flex items-center justify-center border-0"
             >
                 <Skeleton className="size-48 rounded-full flex items-center justify-center bg-gray-700/50">
                     <div className="animate-spin rounded-full size-12 border-t-2 border-b-2 border-white"></div>
@@ -100,12 +104,12 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
         );
     }
 
-    // Handle error state
+    // Render error state
     if (error || (!pokemonData && !isLoadingData)) {
         return (
             <Card
                 data-slot="card"
-                className="w-[300px] h-[480px] rounded-[20px] p-5 bg-gray-800 flex flex-col items-center justify-center"
+                className="w-[300px] h-[480px] rounded-xl p-5 bg-gray-800 flex flex-col items-center justify-center"
             >
                 <img
                     src={POKE_BALL}
@@ -124,14 +128,11 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
         );
     }
 
-    // If there's no data (and no error/loading), render nothing
     if (!pokemonData) return null;
 
-    // Calculate the effective type count (use provided value or calculate from types)
+    // Calculate styling parameters based on Pokemon types
     const effectiveTypeCount =
         typeCount !== null ? typeCount : Math.min(pokemonData.types.length, 3);
-
-    // Get the lowercase type names for CSS references
     const typeColors = pokemonData.types.map((type) => type.toLowerCase());
     const primaryType = typeColors[0] || "normal";
     const secondaryType = typeColors[1] || primaryType;
@@ -141,14 +142,14 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
     return (
         <Card
             data-slot="card"
-            className="w-[300px] h-[480px] rounded-[20px] p-5 transition-all duration-300 hover:-translate-y-[10px] hover:shadow-[0_15px_30px_rgba(0,0,0,0.4)] overflow-hidden border-0 relative"
+            className="w-[300px] h-[480px] rounded-xl p-5 transition-all duration-300 hover:-translate-y-2 hover:shadow-lg overflow-hidden border-0 relative"
             style={getBackgroundStyle(effectiveTypeCount, pokemonData.types)}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
-            {/* Top-left corner */}
+            {/* Top-left corner accent */}
             <div
-                className={`absolute top-0 left-0 size-[90px] rounded-tl-[20px] transition-opacity duration-500 pointer-events-none ${
+                className={`absolute top-0 left-0 size-[90px] rounded-tl-xl transition-opacity duration-500 pointer-events-none ${
                     isHovered ? "opacity-0" : "opacity-100"
                 }`}
                 style={{
@@ -166,9 +167,9 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
                 }}
             />
 
-            {/* Bottom-right corner */}
+            {/* Bottom-right corner accent */}
             <div
-                className={`absolute bottom-0 right-0 size-[90px] rounded-br-[20px] transition-opacity duration-500 pointer-events-none ${
+                className={`absolute bottom-0 right-0 size-[90px] rounded-br-xl transition-opacity duration-500 pointer-events-none ${
                     isHovered ? "opacity-0" : "opacity-100"
                 }`}
                 style={{
@@ -186,7 +187,7 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
                 }}
             />
 
-            {/* Middle sides (only for triple type card) */}
+            {/* Side accents (only for triple type Pokemon) */}
             {effectiveTypeCount === 3 && (
                 <>
                     <div
@@ -220,9 +221,9 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
                 </>
             )}
 
-            {/* Full border on hover */}
+            {/* Hover border effect */}
             <div
-                className={`absolute inset-0 rounded-[20px] border-4 border-transparent transition-opacity duration-500 pointer-events-none overflow-hidden ${
+                className={`absolute inset-0 rounded-xl border-4 border-transparent transition-opacity duration-500 pointer-events-none overflow-hidden ${
                     isHovered ? "opacity-100" : "opacity-0"
                 }`}
                 style={{
@@ -231,23 +232,27 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
                         "linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)",
                     WebkitMaskComposite: "xor",
                     maskComposite: "exclude",
-                    clipPath: "inset(0 0 0 0 round 20px)",
+                    clipPath: "inset(0 0 0 0 round 0.75rem)",
                 }}
             />
 
-            {/* Card content using shadcn structure but preserving original styling */}
+            {/* Card content */}
             <div className="relative z-[1] h-full flex flex-col justify-between">
                 <CardHeader className="p-0 m-0">
                     <Badge
+                        data-slot="badge"
                         variant="outline"
-                        className="absolute top-0 left-0 bg-black/60 text-white font-bold py-[5px] px-[10px] rounded-[15px] border-0"
+                        className="absolute top-0 left-0 bg-black/60 text-white font-bold py-1 px-2 rounded-lg border-0"
                     >
                         #{pokemonData.id}
                     </Badge>
                 </CardHeader>
 
-                <CardContent className="p-0 flex-1 flex flex-col items-center justify-center">
-                    <div className="size-[180px] bg-[rgba(61,61,61,0.7)] rounded-full mx-auto mt-[30px] mb-[20px] flex items-center justify-center">
+                <CardContent
+                    data-slot="content"
+                    className="p-0 flex-1 flex flex-col items-center justify-center"
+                >
+                    <div className="size-[180px] bg-[rgba(61,61,61,0.7)] rounded-full mx-auto mt-8 mb-5 flex items-center justify-center">
                         {isLoadingImage ? (
                             <Skeleton className="size-[150px] rounded-full flex items-center justify-center">
                                 <div className="animate-spin rounded-full size-12 border-t-2 border-b-2 border-white"></div>
@@ -265,36 +270,36 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
                         )}
                     </div>
 
-                    <div className="text-center text-[28px] font-bold my-[10px] text-white">
+                    <div className="text-center text-2xl font-bold my-2 text-white">
                         {pokemonData.name}
                     </div>
 
-                    <div className="flex justify-around w-full my-[15px]">
+                    <div className="flex justify-around w-full my-4">
                         <div className="flex flex-col items-center">
-                            <div className="text-[#aaa] text-[16px]">
-                                Weight
-                            </div>
-                            <div className="text-[20px] font-bold mt-[5px] text-white">
+                            <div className="text-gray-400 text-sm">Weight</div>
+                            <div className="text-lg font-bold mt-1 text-white">
                                 {pokemonData.weight} kg
                             </div>
                         </div>
                         <div className="flex flex-col items-center">
-                            <div className="text-[#aaa] text-[16px]">
-                                Height
-                            </div>
-                            <div className="text-[20px] font-bold mt-[5px] text-white">
+                            <div className="text-gray-400 text-sm">Height</div>
+                            <div className="text-lg font-bold mt-1 text-white">
                                 {pokemonData.height} m
                             </div>
                         </div>
                     </div>
                 </CardContent>
 
-                <CardFooter className="p-0 flex justify-center gap-[10px] mt-[15px] mb-[15px] flex-wrap">
+                <CardFooter
+                    data-slot="footer"
+                    className="p-0 flex justify-center gap-2 mt-4 mb-4 flex-wrap"
+                >
                     {pokemonData.types.slice(0, 3).map((type, index) => (
                         <Badge
                             key={index}
+                            data-slot="badge"
                             variant="outline"
-                            className="font-bold text-[14px] rounded-[50px] py-[6px] px-[16px] border-0"
+                            className="font-bold text-sm rounded-full py-1 px-4 border-0"
                             style={getTypeStyle(type)}
                         >
                             {type}
