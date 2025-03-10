@@ -1,105 +1,13 @@
 "use client";
 
+import { POKE_BALL } from "@/lib/pokemon-api";
+import {
+    getBackgroundStyle,
+    getBorderStyle,
+    getTypeStyle,
+} from "@/lib/pokemon-styles";
+import { getPokemon, getPokemonImage } from "@/services/pokemon-service";
 import React, { useEffect, useState } from "react";
-
-// ================= Helper Functions =================
-
-// Type color utility using CSS variables instead of hardcoded RGB values
-const getTypeColor = (type) => {
-    // Return CSS variable reference for later use with dynamic styles
-    return `var(--color-${type?.toLowerCase() || "normal"})`;
-};
-
-// Helper to get color with opacity
-const getColorWithOpacity = (color, opacity) => {
-    if (typeof color === "string" && color.startsWith("var")) {
-        // Return a CSS variable with opacity
-        return `rgb(from ${color} r g b / ${opacity})`;
-    } else if (typeof color === "string" && color.startsWith("rgb")) {
-        return color.replace("rgb", "rgba").replace(")", `, ${opacity})`);
-    }
-    return color;
-};
-
-// Different type badge styling
-const getTypeStyle = (type) => {
-    // Maps type to background and text color using Tailwind classes
-    const typeLower = type?.toLowerCase() || "normal";
-    return {
-        backgroundColor: `var(--color-${typeLower})`,
-        color: "white",
-    };
-};
-
-// Background style based on Pokémon's actual types
-const getBackgroundStyle = (typeCount, types = []) => {
-    // Convert type names to lowercase for CSS variable reference
-    const typeColors = types.map((type) => type?.toLowerCase() || "normal");
-
-    if (typeCount === 1) {
-        // Single type - use a subtle gradient of the same color with different opacities
-        const type = typeColors[0] || "normal";
-        return {
-            background: `linear-gradient(170deg, rgb(from var(--color-${type}) r g b / 0.08) 0%, rgb(from var(--color-${type}) r g b / 0.15) 100%)`,
-        };
-    } else if (typeCount === 2) {
-        // Two types - gradient between both types
-        const type1 = typeColors[0] || "normal";
-        const type2 = typeColors[1] || type1;
-        return {
-            background: `linear-gradient(170deg, rgb(from var(--color-${type1}) r g b / 0.15) 0%, rgb(from var(--color-${type2}) r g b / 0.15) 100%)`,
-        };
-    } else if (typeCount >= 3) {
-        // Three or more types - gradient across three types
-        const type1 = typeColors[0] || "normal";
-        const type2 = typeColors[1] || type1;
-        const type3 = typeColors[2] || type2;
-        return {
-            background: `linear-gradient(170deg, rgb(from var(--color-${type1}) r g b / 0.10) 0%, rgb(from var(--color-${type2}) r g b / 0.10) 50%, rgb(from var(--color-${type3}) r g b / 0.10) 100%)`,
-        };
-    }
-
-    // Fallback
-    return {
-        background: `linear-gradient(170deg, rgb(from var(--color-normal) r g b / 0.08) 0%, rgb(from var(--color-normal) r g b / 0.15) 100%)`,
-    };
-};
-
-// Border style based on Pokémon's actual types
-const getBorderStyle = (typeCount, types = []) => {
-    // Convert type names to lowercase for CSS variable reference
-    const typeColors = types.map((type) => type?.toLowerCase() || "normal");
-
-    if (typeCount === 1) {
-        // Single type - gradient between lighter and darker shade of same color
-        const type = typeColors[0] || "normal";
-        return {
-            background: `linear-gradient(to bottom right, var(--color-${type}), rgb(from var(--color-${type}) r g b / 0.7)) border-box`,
-        };
-    } else if (typeCount === 2) {
-        // Two types - gradient between both types
-        const type1 = typeColors[0] || "normal";
-        const type2 = typeColors[1] || type1;
-        return {
-            background: `linear-gradient(to bottom right, var(--color-${type1}), var(--color-${type2})) border-box`,
-        };
-    } else if (typeCount >= 3) {
-        // Three or more types - complex gradient across three types
-        const type1 = typeColors[0] || "normal";
-        const type2 = typeColors[1] || type1;
-        const type3 = typeColors[2] || type2;
-        return {
-            background: `linear-gradient(135deg, var(--color-${type1}) 0%, var(--color-${type1}) 25%, var(--color-${type2}) 40%, var(--color-${type2}) 60%, var(--color-${type3}) 75%, var(--color-${type3}) 100%) border-box`,
-        };
-    }
-
-    // Fallback
-    return {
-        background: `linear-gradient(to bottom right, var(--color-normal), rgb(from var(--color-normal) r g b / 0.7)) border-box`,
-    };
-};
-
-// ================= PokemonCard Component =================
 
 const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
     // State management for the component
@@ -109,12 +17,6 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
     const [isLoadingData, setIsLoadingData] = useState(!!pokemonIdOrName);
     const [isLoadingImage, setIsLoadingImage] = useState(true);
     const [error, setError] = useState(false);
-
-    // Constants for fallback images
-    const POKE_BALL =
-        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png";
-    const MASTER_BALL =
-        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/master-ball.png";
 
     // Effect to fetch Pokemon data if ID or name is provided
     useEffect(() => {
@@ -131,40 +33,14 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
             return;
         }
 
-        // Fetch pokemon data from API
-        const fetchPokemon = async () => {
+        // Fetch pokemon data using service
+        const loadPokemonData = async () => {
             setIsLoadingData(true);
             setError(false);
 
             try {
-                const response = await fetch(
-                    `https://pokeapi.co/api/v2/pokemon/${pokemonIdOrName
-                        .toString()
-                        .toLowerCase()}`
-                );
-
-                if (!response.ok) {
-                    throw new Error(
-                        `Failed to fetch Pokémon: ${response.status}`
-                    );
-                }
-
-                const data = await response.json();
-
-                const formattedPokemon = {
-                    id: data.id.toString().padStart(3, "0"),
-                    name:
-                        data.name.charAt(0).toUpperCase() + data.name.slice(1),
-                    weight: (data.weight / 10).toFixed(1), // Convert to kg
-                    height: (data.height / 10).toFixed(1), // Convert to m
-                    types: data.types.map(
-                        (type) =>
-                            type.type.name.charAt(0).toUpperCase() +
-                            type.type.name.slice(1)
-                    ),
-                };
-
-                setPokemonData(formattedPokemon);
+                const data = await getPokemon(pokemonIdOrName);
+                setPokemonData(data);
                 setIsLoadingData(false);
             } catch (error) {
                 console.error("Error fetching Pokémon data:", error);
@@ -173,7 +49,7 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
             }
         };
 
-        fetchPokemon();
+        loadPokemonData();
     }, [pokemon, pokemonIdOrName]);
 
     // Effect to fetch Pokemon image once we have data
@@ -183,28 +59,12 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
             return;
         }
 
-        // Special case for fictional Pokemon
-        if (pokemonData.id === "???") {
-            setImageUrl(MASTER_BALL);
-            setIsLoadingImage(false);
-            return;
-        }
-
-        const fetchPokemonImage = async () => {
+        const loadPokemonImage = async () => {
             setIsLoadingImage(true);
 
             try {
-                const response = await fetch(
-                    `https://pokeapi.co/api/v2/pokemon/${pokemonData.name.toLowerCase()}`
-                );
-                const data = await response.json();
-
-                const fetchedImage =
-                    data.sprites.other["official-artwork"].front_default ||
-                    data.sprites.front_default ||
-                    POKE_BALL;
-
-                setImageUrl(fetchedImage);
+                const imageSource = await getPokemonImage(pokemonData.name);
+                setImageUrl(imageSource);
                 setIsLoadingImage(false);
             } catch (error) {
                 console.error("Error fetching Pokemon image:", error);
@@ -213,7 +73,7 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
             }
         };
 
-        fetchPokemonImage();
+        loadPokemonImage();
     }, [pokemonData]);
 
     // Handle loading state
