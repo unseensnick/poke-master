@@ -1,0 +1,10 @@
+<svg width="156" height="156" viewBox="0 0 156 156" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="156" height="156" rx="78" fill="url(#paint0_linear_electric)"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M62.3533 49.9424C61.8378 48.4533 62.9434 46.9 64.5193 46.9H89.0548C90.0597 46.9 90.9462 47.5539 91.2447 48.5143L103.322 87.5389C103.78 89.0141 102.677 90.5091 101.133 90.5091H86.1163C85.3552 90.5091 84.8053 91.2375 85.0132 91.968L92.5335 118.444C93.2278 120.887 90.0234 122.479 88.4972 120.448L54.8808 75.7451C53.7451 74.2345 54.8229 72.0757 56.714 72.0757H68.4022C69.1909 72.0757 69.7447 71.2987 69.4863 70.5543L62.3533 49.9424Z" fill="white"/>
+<defs>
+<linearGradient id="paint0_linear_electric" x1="1.00793" y1="0" x2="1.00793" y2="154" gradientUnits="userSpaceOnUse">
+<stop stop-color="#EDD53E"/>
+<stop offset="1" stop-color="#FBE273"/>
+</linearGradient>
+</defs>
+</svg>

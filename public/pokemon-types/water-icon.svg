@@ -1,0 +1,10 @@
+<svg width="156" height="156" viewBox="0 0 156 156" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="156" height="156" rx="78" fill="url(#paint0_linear_water)"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M78.18 119.876C94.012 119.876 106.846 106.653 106.846 90.3408C106.846 74.0288 78.18 31.2717 78.18 31.2717C78.18 31.2717 49.5134 74.0288 49.5134 90.3408C49.5134 106.653 62.3474 119.876 78.18 119.876ZM60.6104 94.2795C60.6104 94.2795 66.1584 102.525 72.6314 105.109C79.1044 107.693 91.1254 104.124 91.1254 104.124C91.1254 104.124 85.5774 112.984 73.5564 111.015C61.5354 109.047 60.6104 94.2795 60.6104 94.2795Z" fill="white"/>
+<defs>
+<linearGradient id="paint0_linear_water" x1="0" y1="0" x2="0" y2="156.36" gradientUnits="userSpaceOnUse">
+<stop stop-color="#4A90DD"/>
+<stop offset="1" stop-color="#6CBDE4"/>
+</linearGradient>
+</defs>
+</svg>

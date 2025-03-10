@@ -1,0 +1,10 @@
+<svg width="156" height="156" viewBox="0 0 156 156" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="156" height="156" rx="78" fill="url(#paint0_linear_grass)"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M58.9257 109.4C71.0538 117.763 86.851 118.042 100.084 104.809C115.425 89.4678 107.286 45.4862 107.286 45.4862C107.286 45.4862 70.5046 45.6154 55.9695 58.0896C41.4343 70.5638 40.9108 92.2888 53.4322 104.809C53.7921 105.169 54.1574 105.52 54.5274 105.864L65.4871 92.3179L65.4871 75.7983L69.5174 88.22L78.212 78.4022L76.5153 67.1509L81.3356 73.965L93.8187 59.9397L85.0426 75.7983L93.8187 78.4022L82.7201 80.8372L72.9705 90.7811L88.3121 92.3179L69.5174 96.3819L58.9257 109.4Z" fill="white"/>
+<defs>
+<linearGradient id="paint0_linear_grass" x1="0" y1="0" x2="0" y2="156.364" gradientUnits="userSpaceOnUse">
+<stop stop-color="#5FBC51"/>
+<stop offset="1" stop-color="#5AC178"/>
+</linearGradient>
+</defs>
+</svg>
