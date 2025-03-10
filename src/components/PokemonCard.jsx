@@ -9,6 +9,16 @@ import {
 import { getPokemon, getPokemonImage } from "@/services/pokemon-service";
 import React, { useEffect, useState } from "react";
 
+// Import shadcn/ui components
+import { Badge } from "@/components/ui/badge";
+import {
+    Card,
+    CardContent,
+    CardFooter,
+    CardHeader,
+} from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+
 const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
     // State management for the component
     const [isHovered, setIsHovered] = useState(false);
@@ -79,16 +89,24 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
     // Handle loading state
     if (isLoadingData) {
         return (
-            <div className="relative w-[300px] h-[480px] rounded-[20px] p-5 bg-gray-800 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
-            </div>
+            <Card
+                data-slot="card"
+                className="w-[300px] h-[480px] rounded-[20px] p-5 bg-gray-800 flex items-center justify-center border-0"
+            >
+                <Skeleton className="size-48 rounded-full flex items-center justify-center bg-gray-700/50">
+                    <div className="animate-spin rounded-full size-12 border-t-2 border-b-2 border-white"></div>
+                </Skeleton>
+            </Card>
         );
     }
 
     // Handle error state
     if (error || (!pokemonData && !isLoadingData)) {
         return (
-            <div className="relative w-[300px] h-[480px] rounded-[20px] p-5 bg-gray-800 flex flex-col items-center justify-center">
+            <Card
+                data-slot="card"
+                className="w-[300px] h-[480px] rounded-[20px] p-5 bg-gray-800 flex flex-col items-center justify-center"
+            >
                 <img
                     src={POKE_BALL}
                     alt="Pokéball"
@@ -102,7 +120,7 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
                         {pokemonIdOrName}
                     </p>
                 )}
-            </div>
+            </Card>
         );
     }
 
@@ -121,8 +139,9 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
 
     // Render the full card
     return (
-        <div
-            className="relative w-[300px] h-[480px] rounded-[20px] p-5 transition-all duration-300 hover:-translate-y-[10px] hover:shadow-[0_15px_30px_rgba(0,0,0,0.4)]"
+        <Card
+            data-slot="card"
+            className="w-[300px] h-[480px] rounded-[20px] p-5 transition-all duration-300 hover:-translate-y-[10px] hover:shadow-[0_15px_30px_rgba(0,0,0,0.4)] overflow-hidden border-0 relative"
             style={getBackgroundStyle(effectiveTypeCount, pokemonData.types)}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
@@ -203,7 +222,7 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
 
             {/* Full border on hover */}
             <div
-                className={`absolute inset-0 rounded-[20px] border-4 border-transparent transition-opacity duration-500 pointer-events-none ${
+                className={`absolute inset-0 rounded-[20px] border-4 border-transparent transition-opacity duration-500 pointer-events-none overflow-hidden ${
                     isHovered ? "opacity-100" : "opacity-0"
                 }`}
                 style={{
@@ -212,70 +231,78 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
                         "linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)",
                     WebkitMaskComposite: "xor",
                     maskComposite: "exclude",
+                    clipPath: "inset(0 0 0 0 round 20px)",
                 }}
             />
 
-            {/* Card content */}
+            {/* Card content using shadcn structure but preserving original styling */}
             <div className="relative z-[1] h-full flex flex-col justify-between">
-                <div className="absolute top-0 left-0 bg-black/60 text-white font-bold py-[5px] px-[10px] rounded-[15px]">
-                    #{pokemonData.id}
-                </div>
+                <CardHeader className="p-0 m-0">
+                    <Badge
+                        variant="outline"
+                        className="absolute top-0 left-0 bg-black/60 text-white font-bold py-[5px] px-[10px] rounded-[15px] border-0"
+                    >
+                        #{pokemonData.id}
+                    </Badge>
+                </CardHeader>
 
-                <div className="size-[180px] bg-[rgba(61,61,61,0.7)] rounded-full mx-auto mt-[30px] mb-[20px] flex items-center justify-center">
-                    {isLoadingImage ? (
-                        <div className="size-[150px] flex items-center justify-center">
-                            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+                <CardContent className="p-0 flex-1 flex flex-col items-center justify-center">
+                    <div className="size-[180px] bg-[rgba(61,61,61,0.7)] rounded-full mx-auto mt-[30px] mb-[20px] flex items-center justify-center">
+                        {isLoadingImage ? (
+                            <Skeleton className="size-[150px] rounded-full flex items-center justify-center">
+                                <div className="animate-spin rounded-full size-12 border-t-2 border-b-2 border-white"></div>
+                            </Skeleton>
+                        ) : (
+                            <img
+                                src={imageUrl || POKE_BALL}
+                                alt={pokemonData.name}
+                                className="size-[150px] object-contain"
+                                onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.src = POKE_BALL;
+                                }}
+                            />
+                        )}
+                    </div>
+
+                    <div className="text-center text-[28px] font-bold my-[10px] text-white">
+                        {pokemonData.name}
+                    </div>
+
+                    <div className="flex justify-around w-full my-[15px]">
+                        <div className="flex flex-col items-center">
+                            <div className="text-[#aaa] text-[16px]">
+                                Weight
+                            </div>
+                            <div className="text-[20px] font-bold mt-[5px] text-white">
+                                {pokemonData.weight} kg
+                            </div>
                         </div>
-                    ) : (
-                        <img
-                            src={imageUrl || POKE_BALL}
-                            alt={pokemonData.name}
-                            className="size-[150px] object-contain"
-                            onError={(e) => {
-                                e.target.onerror = null;
-                                e.target.src = POKE_BALL;
-                            }}
-                        />
-                    )}
-                </div>
-
-                <div className="text-center text-[28px] font-bold my-[10px] text-white">
-                    {pokemonData.name}
-                </div>
-
-                <div className="flex justify-around my-[15px]">
-                    <div className="flex flex-col items-center">
-                        <div className="text-[#aaa] text-[16px]">Weight</div>
-                        <div className="text-[20px] font-bold mt-[5px] text-white">
-                            {pokemonData.weight} kg
+                        <div className="flex flex-col items-center">
+                            <div className="text-[#aaa] text-[16px]">
+                                Height
+                            </div>
+                            <div className="text-[20px] font-bold mt-[5px] text-white">
+                                {pokemonData.height} m
+                            </div>
                         </div>
                     </div>
-                    <div className="flex flex-col items-center">
-                        <div className="text-[#aaa] text-[16px]">Height</div>
-                        <div className="text-[20px] font-bold mt-[5px] text-white">
-                            {pokemonData.height} m
-                        </div>
-                    </div>
-                </div>
+                </CardContent>
 
-                <div
-                    className={`flex justify-center gap-[10px] mt-[15px] mb-[15px] flex-wrap`}
-                >
+                <CardFooter className="p-0 flex justify-center gap-[10px] mt-[15px] mb-[15px] flex-wrap">
                     {pokemonData.types.slice(0, 3).map((type, index) => (
-                        <div
+                        <Badge
                             key={index}
-                            className="font-bold text-[14px] rounded-[50px]"
-                            style={{
-                                ...getTypeStyle(type),
-                                padding: "6px 16px",
-                            }}
+                            variant="outline"
+                            className="font-bold text-[14px] rounded-[50px] py-[6px] px-[16px] border-0"
+                            style={getTypeStyle(type)}
                         >
                             {type}
-                        </div>
+                        </Badge>
                     ))}
-                </div>
+                </CardFooter>
             </div>
-        </div>
+        </Card>
     );
 };
 
