@@ -1,3 +1,4 @@
+import { SiteHeader } from "@/components/site-header";
 import { Fira_Sans } from "next/font/google";
 import "./globals.css";
 
@@ -16,6 +17,7 @@ export default function RootLayout({ children }) {
     return (
         <html lang="en">
             <body className={`${firaSans.variable}  antialiased`}>
+                <SiteHeader />
                 {children}
             </body>
         </html>
