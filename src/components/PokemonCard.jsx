@@ -4,35 +4,18 @@ import React, { useEffect, useState } from "react";
 
 // ================= Helper Functions =================
 
-// Type color utility from globals.css
+// Type color utility using CSS variables instead of hardcoded RGB values
 const getTypeColor = (type) => {
-    const typeMap = {
-        grass: "rgb(120, 200, 80)", // --color-grass
-        poison: "rgb(160, 64, 160)", // --color-poison (adjusted to match original)
-        fire: "rgb(240, 128, 48)", // --color-fire
-        water: "rgb(104, 144, 240)", // --color-water (adjusted to match original)
-        electric: "rgb(248, 208, 48)", // --color-electric
-        dragon: "rgb(112, 56, 248)", // --color-dragon
-        normal: "rgb(168, 168, 120)", // --color-normal
-        flying: "rgb(168, 144, 240)", // --color-flying
-        bug: "rgb(168, 184, 32)", // --color-bug
-        ground: "rgb(224, 192, 104)", // --color-ground
-        fairy: "rgb(238, 153, 172)", // --color-fairy
-        fighting: "rgb(192, 48, 40)", // --color-fighting
-        psychic: "rgb(248, 88, 136)", // --color-psychic
-        rock: "rgb(184, 160, 56)", // --color-rock
-        steel: "rgb(184, 184, 208)", // --color-steel
-        ice: "rgb(152, 216, 216)", // --color-ice
-        ghost: "rgb(112, 88, 152)", // --color-ghost
-        dark: "rgb(112, 88, 72)", // --color-dark
-    };
-
-    return typeMap[type?.toLowerCase()] || typeMap.normal;
+    // Return CSS variable reference for later use with dynamic styles
+    return `var(--color-${type?.toLowerCase() || "normal"})`;
 };
 
 // Helper to get color with opacity
 const getColorWithOpacity = (color, opacity) => {
-    if (typeof color === "string" && color.startsWith("rgb")) {
+    if (typeof color === "string" && color.startsWith("var")) {
+        // Return a CSS variable with opacity
+        return `rgb(from ${color} r g b / ${opacity})`;
+    } else if (typeof color === "string" && color.startsWith("rgb")) {
         return color.replace("rgb", "rgba").replace(")", `, ${opacity})`);
     }
     return color;
@@ -40,65 +23,79 @@ const getColorWithOpacity = (color, opacity) => {
 
 // Different type badge styling
 const getTypeStyle = (type) => {
-    switch (type?.toLowerCase()) {
-        case "grass":
-            return { backgroundColor: "#78C850", color: "white" };
-        case "poison":
-            return { backgroundColor: "#A040A0", color: "white" };
-        case "electric":
-            return { backgroundColor: "#F8D030", color: "white" };
-        case "water":
-            return { backgroundColor: "#6890F0", color: "white" };
-        case "fire":
-            return { backgroundColor: "#F08030", color: "white" };
-        case "dragon":
-            return { backgroundColor: "#7038F8", color: "white" };
-        default:
-            return { backgroundColor: "#A8A878", color: "white" };
-    }
-};
-
-// Background style based on type count
-const getBackgroundStyle = (typeCount, types = []) => {
-    if (typeCount === 1) {
-        return {
-            background: `linear-gradient(170deg, rgba(250, 200, 60, 0.08) 0%, rgba(240, 160, 40, 0.08) 100%)`,
-        };
-    } else if (typeCount === 2) {
-        return {
-            background: `linear-gradient(170deg, rgba(${
-                types[0] === "Grass" ? "120, 200, 80" : "160, 64, 160"
-            }, 0.15) 0%, rgba(${
-                types[1] === "Poison" ? "160, 64, 160" : "120, 200, 80"
-            }, 0.15) 100%)`,
-        };
-    } else if (typeCount === 3) {
-        return {
-            background: `linear-gradient(170deg, rgba(100, 160, 255, 0.10) 0%, rgba(250, 120, 50, 0.10) 50%, rgba(248, 208, 48, 0.10) 100%)`,
-        };
-    }
+    // Maps type to background and text color using Tailwind classes
+    const typeLower = type?.toLowerCase() || "normal";
     return {
-        background: `linear-gradient(170deg, rgba(250, 200, 60, 0.08) 0%, rgba(240, 160, 40, 0.08) 100%)`,
+        backgroundColor: `var(--color-${typeLower})`,
+        color: "white",
     };
 };
 
-// Different border style based on type count
-const getBorderStyle = (typeCount) => {
+// Background style based on Pokémon's actual types
+const getBackgroundStyle = (typeCount, types = []) => {
+    // Convert type names to lowercase for CSS variable reference
+    const typeColors = types.map((type) => type?.toLowerCase() || "normal");
+
     if (typeCount === 1) {
+        // Single type - use a subtle gradient of the same color with different opacities
+        const type = typeColors[0] || "normal";
         return {
-            background: `linear-gradient(to bottom right, #FAC83C, #F0A028) border-box`,
+            background: `linear-gradient(170deg, rgb(from var(--color-${type}) r g b / 0.08) 0%, rgb(from var(--color-${type}) r g b / 0.15) 100%)`,
         };
     } else if (typeCount === 2) {
+        // Two types - gradient between both types
+        const type1 = typeColors[0] || "normal";
+        const type2 = typeColors[1] || type1;
         return {
-            background: `linear-gradient(to bottom right, #78C850, #A040A0) border-box`,
+            background: `linear-gradient(170deg, rgb(from var(--color-${type1}) r g b / 0.15) 0%, rgb(from var(--color-${type2}) r g b / 0.15) 100%)`,
         };
-    } else if (typeCount === 3) {
+    } else if (typeCount >= 3) {
+        // Three or more types - gradient across three types
+        const type1 = typeColors[0] || "normal";
+        const type2 = typeColors[1] || type1;
+        const type3 = typeColors[2] || type2;
         return {
-            background: `linear-gradient(135deg, #6890F0 0%, #6890F0 25%, #F08030 40%, #F08030 60%, #F8D030 75%, #F8D030 100%) border-box`,
+            background: `linear-gradient(170deg, rgb(from var(--color-${type1}) r g b / 0.10) 0%, rgb(from var(--color-${type2}) r g b / 0.10) 50%, rgb(from var(--color-${type3}) r g b / 0.10) 100%)`,
         };
     }
+
+    // Fallback
     return {
-        background: `linear-gradient(to bottom right, #FAC83C, #F0A028) border-box`,
+        background: `linear-gradient(170deg, rgb(from var(--color-normal) r g b / 0.08) 0%, rgb(from var(--color-normal) r g b / 0.15) 100%)`,
+    };
+};
+
+// Border style based on Pokémon's actual types
+const getBorderStyle = (typeCount, types = []) => {
+    // Convert type names to lowercase for CSS variable reference
+    const typeColors = types.map((type) => type?.toLowerCase() || "normal");
+
+    if (typeCount === 1) {
+        // Single type - gradient between lighter and darker shade of same color
+        const type = typeColors[0] || "normal";
+        return {
+            background: `linear-gradient(to bottom right, var(--color-${type}), rgb(from var(--color-${type}) r g b / 0.7)) border-box`,
+        };
+    } else if (typeCount === 2) {
+        // Two types - gradient between both types
+        const type1 = typeColors[0] || "normal";
+        const type2 = typeColors[1] || type1;
+        return {
+            background: `linear-gradient(to bottom right, var(--color-${type1}), var(--color-${type2})) border-box`,
+        };
+    } else if (typeCount >= 3) {
+        // Three or more types - complex gradient across three types
+        const type1 = typeColors[0] || "normal";
+        const type2 = typeColors[1] || type1;
+        const type3 = typeColors[2] || type2;
+        return {
+            background: `linear-gradient(135deg, var(--color-${type1}) 0%, var(--color-${type1}) 25%, var(--color-${type2}) 40%, var(--color-${type2}) 60%, var(--color-${type3}) 75%, var(--color-${type3}) 100%) border-box`,
+        };
+    }
+
+    // Fallback
+    return {
+        background: `linear-gradient(to bottom right, var(--color-normal), rgb(from var(--color-normal) r g b / 0.7)) border-box`,
     };
 };
 
@@ -256,6 +253,12 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
     const effectiveTypeCount =
         typeCount !== null ? typeCount : Math.min(pokemonData.types.length, 3);
 
+    // Get the lowercase type names for CSS references
+    const typeColors = pokemonData.types.map((type) => type.toLowerCase());
+    const primaryType = typeColors[0] || "normal";
+    const secondaryType = typeColors[1] || primaryType;
+    const tertiaryType = typeColors[2] || secondaryType;
+
     // Render the full card
     return (
         <div
@@ -272,10 +275,10 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
                 style={{
                     boxShadow:
                         effectiveTypeCount === 1
-                            ? "inset 4px 4px 0 0 rgba(250, 200, 60, 0.5)"
+                            ? `inset 4px 4px 0 0 rgb(from var(--color-${primaryType}) r g b / 0.5)`
                             : effectiveTypeCount === 2
-                            ? "inset 4px 4px 0 0 rgba(120, 200, 80, 0.7)"
-                            : "inset 4px 4px 0 0 rgba(100, 160, 255, 0.6)",
+                            ? `inset 4px 4px 0 0 rgb(from var(--color-${primaryType}) r g b / 0.7)`
+                            : `inset 4px 4px 0 0 rgb(from var(--color-${primaryType}) r g b / 0.6)`,
                     filter: "blur(2px)",
                     maskImage:
                         "linear-gradient(135deg, rgba(0,0,0,1) 5%, rgba(0,0,0,0.9) 10%, rgba(0,0,0,0.8) 15%, rgba(0,0,0,0.7) 20%, rgba(0,0,0,0.6) 25%, rgba(0,0,0,0.5) 30%, rgba(0,0,0,0.4) 35%, rgba(0,0,0,0.3) 40%, rgba(0,0,0,0.2) 45%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.1) 55%, rgba(0,0,0,0.05) 60%, transparent 70%)",
@@ -292,10 +295,10 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
                 style={{
                     boxShadow:
                         effectiveTypeCount === 1
-                            ? "inset -4px -4px 0 0 rgba(240, 160, 40, 0.5)"
+                            ? `inset -4px -4px 0 0 rgb(from var(--color-${primaryType}) r g b / 0.5)`
                             : effectiveTypeCount === 2
-                            ? "inset -4px -4px 0 0 rgba(160, 64, 160, 0.7)"
-                            : "inset -4px -4px 0 0 rgba(248, 208, 48, 0.6)",
+                            ? `inset -4px -4px 0 0 rgb(from var(--color-${secondaryType}) r g b / 0.7)`
+                            : `inset -4px -4px 0 0 rgb(from var(--color-${tertiaryType}) r g b / 0.6)`,
                     filter: "blur(2px)",
                     maskImage:
                         "linear-gradient(315deg, rgba(0,0,0,1) 5%, rgba(0,0,0,0.9) 10%, rgba(0,0,0,0.8) 15%, rgba(0,0,0,0.7) 20%, rgba(0,0,0,0.6) 25%, rgba(0,0,0,0.5) 30%, rgba(0,0,0,0.4) 35%, rgba(0,0,0,0.3) 40%, rgba(0,0,0,0.2) 45%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.1) 55%, rgba(0,0,0,0.05) 60%, transparent 70%)",
@@ -312,8 +315,8 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
                             isHovered ? "opacity-0" : ""
                         }`}
                         style={{
-                            borderRight: "4px solid rgba(250, 120, 50, 0.15)",
-                            boxShadow: "0 0 10px 2px rgba(250, 120, 50, 0.08)",
+                            borderRight: `4px solid rgb(from var(--color-${secondaryType}) r g b / 0.15)`,
+                            boxShadow: `0 0 10px 2px rgb(from var(--color-${secondaryType}) r g b / 0.08)`,
                             filter: "blur(3px)",
                             maskImage:
                                 "linear-gradient(to left, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 30%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.1) 80%, transparent 100%)",
@@ -326,8 +329,8 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
                             isHovered ? "opacity-0" : ""
                         }`}
                         style={{
-                            borderLeft: "4px solid rgba(250, 120, 50, 0.15)",
-                            boxShadow: "0 0 10px 2px rgba(250, 120, 50, 0.08)",
+                            borderLeft: `4px solid rgb(from var(--color-${secondaryType}) r g b / 0.15)`,
+                            boxShadow: `0 0 10px 2px rgb(from var(--color-${secondaryType}) r g b / 0.08)`,
                             filter: "blur(3px)",
                             maskImage:
                                 "linear-gradient(to right, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 30%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.1) 80%, transparent 100%)",
@@ -344,7 +347,7 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
                     isHovered ? "opacity-100" : "opacity-0"
                 }`}
                 style={{
-                    ...getBorderStyle(effectiveTypeCount),
+                    ...getBorderStyle(effectiveTypeCount, pokemonData.types),
                     WebkitMask:
                         "linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)",
                     WebkitMaskComposite: "xor",
