@@ -57,26 +57,26 @@
     --sidebar-ring: oklch(0.705 0.015 286.067);
 
     /* Pokemon type colors - optimized for light mode contrast */
-    --color-grass: rgb(76, 158, 56);
-    --color-poison: rgb(142, 45, 142);
-    --color-fire: rgb(222, 100, 30);
-    --color-flying: rgb(128, 104, 200);
-    --color-water: rgb(48, 100, 210);
-    --color-bug: rgb(136, 152, 24);
-    --color-normal: rgb(136, 136, 96);
-    --color-electric: rgb(218, 178, 18);
-    --color-ground: rgb(184, 152, 64);
-    --color-fairy: rgb(198, 113, 132);
-    --color-fighting: rgb(162, 38, 30);
-    --color-psychic: rgb(218, 58, 106);
-    --color-rock: rgb(154, 130, 46);
-    --color-steel: rgb(144, 144, 168);
-    --color-ice: rgb(102, 166, 166);
-    --color-ghost: rgb(92, 68, 132);
-    --color-dragon: rgb(92, 46, 208);
-    --color-dark: rgb(92, 68, 52);
-    --color-stellar: rgb(44, 141, 125);
-    --color-unknown: rgb(84, 139, 123);
+    --color-pokemon-grass: oklch(0.63 0.16 139.92 / 1);
+    --color-pokemon-poison: oklch(0.48 0.17 327.87 / 1);
+    --color-pokemon-fire: oklch(0.64 0.17 45.34 / 1);
+    --color-pokemon-flying: oklch(0.58 0.14 292.93 / 1);
+    --color-pokemon-water: oklch(0.53 0.18 262.81 / 1);
+    --color-pokemon-bug: oklch(0.65 0.14 117.17 / 1);
+    --color-pokemon-normal: oklch(0.62 0.06 107.95 / 1);
+    --color-pokemon-electric: oklch(0.78 0.16 92.13 / 1);
+    --color-pokemon-ground: oklch(0.69 0.11 89.03 / 1);
+    --color-pokemon-fairy: oklch(0.65 0.11 6.21 / 1);
+    --color-pokemon-fighting: oklch(0.47 0.16 28.68 / 1);
+    --color-pokemon-psychic: oklch(0.6 0.2 7.79 / 1);
+    --color-pokemon-rock: oklch(0.61 0.11 92.87 / 1);
+    --color-pokemon-steel: oklch(0.66 0.04 285.39 / 1);
+    --color-pokemon-ice: oklch(0.68 0.07 195.72 / 1);
+    --color-pokemon-ghost: oklch(0.44 0.1 299.42 / 1);
+    --color-pokemon-dragon: oklch(0.47 0.23 286.94 / 1);
+    --color-pokemon-dark: oklch(0.41 0.04 54.92 / 1);
+    --color-pokemon-stellar: oklch(0.58 0.09 179.68 / 1);
+    --color-pokemon-unknown: oklch(0.59 0.06 173.52 / 1);
 }
 
 /* 
@@ -123,26 +123,26 @@
     --sidebar-ring: oklch(0.442 0.017 285.786);
 
     /* Pokemon type colors - brightened for dark mode visibility */
-    --color-grass: rgb(96, 178, 76);
-    --color-poison: rgb(162, 65, 162);
-    --color-fire: rgb(242, 120, 42);
-    --color-flying: rgb(148, 124, 220);
-    --color-water: rgb(68, 120, 230);
-    --color-bug: rgb(156, 172, 44);
-    --color-normal: rgb(156, 156, 116);
-    --color-electric: rgb(238, 198, 38);
-    --color-ground: rgb(204, 172, 84);
-    --color-fairy: rgb(218, 133, 152);
-    --color-fighting: rgb(182, 58, 50);
-    --color-psychic: rgb(238, 78, 126);
-    --color-rock: rgb(174, 150, 66);
-    --color-steel: rgb(164, 164, 188);
-    --color-ice: rgb(122, 186, 186);
-    --color-ghost: rgb(112, 88, 152);
-    --color-dragon: rgb(112, 66, 228);
-    --color-dark: rgb(132, 108, 92);
-    --color-stellar: rgb(64, 181, 165);
-    --color-unknown: rgb(104, 159, 143);
+    --color-pokrmon-grass: oklch(0.69 0.16 139.78 / 1);
+    --color-pokrmon-poison: oklch(0.54 0.17 327.65 / 1);
+    --color-pokrmon-fire: oklch(0.7 0.17 48.44 / 1);
+    --color-pokrmon-flying: oklch(0.65 0.14 293.6 / 1);
+    --color-pokrmon-water: oklch(0.59 0.18 263.09 / 1);
+    --color-pokrmon-bug: oklch(0.71 0.15 116.6 / 1);
+    --color-pokrmon-normal: oklch(0.68 0.06 107.79 / 1);
+    --color-pokrmon-electric: oklch(0.84 0.16 93.25 / 1);
+    --color-pokrmon-ground: oklch(0.76 0.11 89.51 / 1);
+    --color-pokrmon-fairy: oklch(0.71 0.11 5.67 / 1);
+    --color-pokrmon-fighting: oklch(0.53 0.16 27.68 / 1);
+    --color-pokrmon-psychic: oklch(0.66 0.2 6.24 / 1);
+    --color-pokrmon-rock: oklch(0.68 0.11 93.39 / 1);
+    --color-pokrmon-steel: oklch(0.73 0.03 285.51 / 1);
+    --color-pokrmon-ice: oklch(0.75 0.07 195.84 / 1);
+    --color-pokrmon-ghost: oklch(0.51 0.1 300.12 / 1);
+    --color-pokrmon-dragon: oklch(0.53 0.23 289.18 / 1);
+    --color-pokrmon-dark: oklch(0.55 0.04 55.44 / 1);
+    --color-pokrmon-stellar: oklch(0.7 0.11 182.44 / 1);
+    --color-pokrmon-unknown: oklch(0.66 0.06 174.02 / 1);
 }
 
 /* 
@@ -195,26 +195,26 @@
     --color-sidebar-ring: var(--sidebar-ring);
 
     /* Map Pokemon type colors */
-    --color-grass: var(--color-grass);
-    --color-poison: var(--color-poison);
-    --color-fire: var(--color-fire);
-    --color-flying: var(--color-flying);
-    --color-water: var(--color-water);
-    --color-bug: var(--color-bug);
-    --color-normal: var(--color-normal);
-    --color-electric: var(--color-electric);
-    --color-ground: var(--color-ground);
-    --color-fairy: var(--color-fairy);
-    --color-fighting: var(--color-fighting);
-    --color-psychic: var(--color-psychic);
-    --color-rock: var(--color-rock);
-    --color-steel: var(--color-steel);
-    --color-ice: var(--color-ice);
-    --color-ghost: var(--color-ghost);
-    --color-dragon: var(--color-dragon);
-    --color-dark: var(--color-dark);
-    --color-stellar: var(--color-stellar);
-    --color-unknown: var(--color-unknown);
+    --color-pokemon-grass: var(--color-pokemon-grass);
+    --color-pokemon-poison: var(--color-pokemon-poison);
+    --color-pokemon-fire: var(--color-pokemon-fire);
+    --color-pokemon-flying: var(--color-pokemon-flying);
+    --color-pokemon-water: var(--color-pokemon-water);
+    --color-pokemon-bug: var(--color-pokemon-bug);
+    --color-pokemon-normal: var(--color-pokemon-normal);
+    --color-pokemon-electric: var(--color-pokemon-electric);
+    --color-pokemon-ground: var(--color-pokemon-ground);
+    --color-pokemon-fairy: var(--color-pokemon-fairy);
+    --color-pokemon-fighting: var(--color-pokemon-fighting);
+    --color-pokemon-psychic: var(--color-pokemon-psychic);
+    --color-pokemon-rock: var(--color-pokemon-rock);
+    --color-pokemon-steel: var(--color-pokemon-steel);
+    --color-pokemon-ice: var(--color-pokemon-ice);
+    --color-pokemon-ghost: var(--color-pokemon-ghost);
+    --color-pokemon-dragon: var(--color-pokemon-dragon);
+    --color-pokemon-dark: var(--color-pokemon-dark);
+    --color-pokemon-stellar: var(--color-pokemon-stellar);
+    --color-pokemon-unknown: var(--color-pokemon-unknown);
 }
 
 /* Base layer styles */
@@ -224,6 +224,6 @@
     }
     body {
         @apply bg-background text-foreground;
-        font-family: "Arial", sans-serif;
+        font-family: "Fira Sans", sans-serif;
     }
 }

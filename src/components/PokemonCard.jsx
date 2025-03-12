@@ -155,10 +155,10 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
                 style={{
                     boxShadow:
                         effectiveTypeCount === 1
-                            ? `inset 4px 4px 0 0 rgb(from var(--color-${primaryType}) r g b / 0.5)`
+                            ? `inset 4px 4px 0 0 rgb(from var(--color-pokemon-${primaryType}) r g b / 0.5)`
                             : effectiveTypeCount === 2
-                            ? `inset 4px 4px 0 0 rgb(from var(--color-${primaryType}) r g b / 0.7)`
-                            : `inset 4px 4px 0 0 rgb(from var(--color-${primaryType}) r g b / 0.6)`,
+                            ? `inset 4px 4px 0 0 rgb(from var(--color-pokemon-${primaryType}) r g b / 0.7)`
+                            : `inset 4px 4px 0 0 rgb(from var(--color-pokemon-${primaryType}) r g b / 0.6)`,
                     filter: "blur(2px)",
                     maskImage:
                         "linear-gradient(135deg, rgba(0,0,0,1) 5%, rgba(0,0,0,0.9) 10%, rgba(0,0,0,0.8) 15%, rgba(0,0,0,0.7) 20%, rgba(0,0,0,0.6) 25%, rgba(0,0,0,0.5) 30%, rgba(0,0,0,0.4) 35%, rgba(0,0,0,0.3) 40%, rgba(0,0,0,0.2) 45%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.1) 55%, rgba(0,0,0,0.05) 60%, transparent 70%)",
@@ -175,10 +175,10 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
                 style={{
                     boxShadow:
                         effectiveTypeCount === 1
-                            ? `inset -4px -4px 0 0 rgb(from var(--color-${primaryType}) r g b / 0.5)`
+                            ? `inset -4px -4px 0 0 rgb(from var(--color-pokemon-${primaryType}) r g b / 0.5)`
                             : effectiveTypeCount === 2
-                            ? `inset -4px -4px 0 0 rgb(from var(--color-${secondaryType}) r g b / 0.7)`
-                            : `inset -4px -4px 0 0 rgb(from var(--color-${tertiaryType}) r g b / 0.6)`,
+                            ? `inset -4px -4px 0 0 rgb(from var(--color-pokemon-${secondaryType}) r g b / 0.7)`
+                            : `inset -4px -4px 0 0 rgb(from var(--color-pokemon-${tertiaryType}) r g b / 0.6)`,
                     filter: "blur(2px)",
                     maskImage:
                         "linear-gradient(315deg, rgba(0,0,0,1) 5%, rgba(0,0,0,0.9) 10%, rgba(0,0,0,0.8) 15%, rgba(0,0,0,0.7) 20%, rgba(0,0,0,0.6) 25%, rgba(0,0,0,0.5) 30%, rgba(0,0,0,0.4) 35%, rgba(0,0,0,0.3) 40%, rgba(0,0,0,0.2) 45%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.1) 55%, rgba(0,0,0,0.05) 60%, transparent 70%)",
@@ -195,8 +195,8 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
                             isHovered ? "opacity-0" : ""
                         }`}
                         style={{
-                            borderRight: `4px solid rgb(from var(--color-${secondaryType}) r g b / 0.15)`,
-                            boxShadow: `0 0 10px 2px rgb(from var(--color-${secondaryType}) r g b / 0.08)`,
+                            borderRight: `4px solid rgb(from var(--color-pokemon-${secondaryType}) r g b / 0.15)`,
+                            boxShadow: `0 0 10px 2px rgb(from var(--color-pokemon-${secondaryType}) r g b / 0.08)`,
                             filter: "blur(3px)",
                             maskImage:
                                 "linear-gradient(to left, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 30%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.1) 80%, transparent 100%)",
@@ -209,8 +209,8 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
                             isHovered ? "opacity-0" : ""
                         }`}
                         style={{
-                            borderLeft: `4px solid rgb(from var(--color-${secondaryType}) r g b / 0.15)`,
-                            boxShadow: `0 0 10px 2px rgb(from var(--color-${secondaryType}) r g b / 0.08)`,
+                            borderLeft: `4px solid rgb(from var(--color-pokemon-${secondaryType}) r g b / 0.15)`,
+                            boxShadow: `0 0 10px 2px rgb(from var(--color-pokemon-${secondaryType}) r g b / 0.08)`,
                             filter: "blur(3px)",
                             maskImage:
                                 "linear-gradient(to right, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 30%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.1) 80%, transparent 100%)",

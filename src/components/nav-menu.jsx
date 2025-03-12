@@ -16,7 +16,7 @@ export function NavMenu() {
                     <Link href="/" legacyBehavior passHref>
                         <NavigationMenuLink
                             className="text-white/70 text-md hover:text-white hover:bg-transparent relative 
-              after:absolute after:block after:content-[''] after:h-0.5 after:bg-grass 
+              after:absolute after:block after:content-[''] after:h-0.5 after:bg-pokemon-grass 
               after:rounded-full after:w-0 after:left-1/2 after:-translate-x-1/2 after:bottom-[4px]
               after:transition-all hover:after:w-[105%] transition-colors"
                         >
@@ -29,7 +29,7 @@ export function NavMenu() {
                     <Link href="/explore" legacyBehavior passHref>
                         <NavigationMenuLink
                             className="text-white/70 text-md hover:text-white hover:bg-transparent relative 
-              after:absolute after:block after:content-[''] after:h-0.5 after:bg-grass 
+              after:absolute after:block after:content-[''] after:h-0.5 after:bg-pokemon-grass 
               after:rounded-full after:w-0 after:left-1/2 after:-translate-x-1/2 after:bottom-[4px]
               after:transition-all hover:after:w-[105%] transition-colors"
                         >
@@ -42,7 +42,7 @@ export function NavMenu() {
                     <Link href="/battle" legacyBehavior passHref>
                         <NavigationMenuLink
                             className="text-white/70 text-md hover:text-white hover:bg-transparent relative 
-              after:absolute after:block after:content-[''] after:h-0.5 after:bg-grass 
+              after:absolute after:block after:content-[''] after:h-0.5 after:bg-pokemon-grass 
               after:rounded-full after:w-0 after:left-1/2 after:-translate-x-1/2 after:bottom-[4px]
               after:transition-all hover:after:w-[105%] transition-colors"
                         >
@@ -55,7 +55,7 @@ export function NavMenu() {
                     <Link href="/team" legacyBehavior passHref>
                         <NavigationMenuLink
                             className="text-white/70 text-md hover:text-white hover:bg-transparent relative 
-              after:absolute after:block after:content-[''] after:h-0.5 after:bg-grass 
+              after:absolute after:block after:content-[''] after:h-0.5 after:bg-pokemon-grass 
               after:rounded-full after:w-0 after:left-1/2 after:-translate-x-1/2 after:bottom-[4px]
               after:transition-all hover:after:w-[105%] transition-colors"
                         >
