@@ -2,8 +2,14 @@
 
 import { POKE_BALL } from "@/lib/pokemon-api";
 import {
+    extractTypeInfo,
     getBackgroundStyle,
     getBorderStyle,
+    getBottomRightAccentStyle,
+    getImageGlowStyle,
+    getLeftSideAccentStyle,
+    getRightSideAccentStyle,
+    getTopLeftAccentStyle,
     getTypeStyle,
 } from "@/lib/pokemon-styles";
 import { getPokemon, getPokemonImage } from "@/services/pokemon-service";
@@ -21,41 +27,40 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
- * PokemonCard - An animated, interactive card component displaying Pokémon information
+ * PokemonCard - Interactive, animated card for displaying Pokémon with type-based styling
  *
- * This component handles multiple states (loading, error, ready) with smooth transitions
- * between them using Framer Motion. The card features type-based styling, hover animations,
- * and responsive visual feedback. It can either receive a pre-loaded Pokémon object or
- * fetch data from the API based on a provided ID or name.
+ * This component shows details about a Pokémon with visual styles based on its type(s).
+ * It features smooth animations, loading states, and hover effects.
  *
- * The component implements:
- * - Smooth state transitions with AnimatePresence
- * - Dynamic styling based on Pokémon types
- * - Hover animations with variant propagation
- * - Proper loading and error states
- * - Responsive image loading with fallbacks
+ * Key features:
+ * - Shows Pokemon image, name, ID, weight, height, and types
+ * - Colors and styles change based on Pokemon's type(s)
+ * - Animated hover effects with coordinated animations across card elements
+ * - Loading spinner while fetching data
+ * - Error state with helpful message if Pokemon can't be found
+ * - Can either fetch Pokemon data automatically or use pre-loaded data
  *
- * @param {Object} pokemon - Optional pre-loaded Pokemon data object. Takes precedence over pokemonIdOrName.
- *                           Should contain: id, name, weight, height, and types[].
- * @param {string|number} pokemonIdOrName - Pokemon ID or name to fetch data for when pokemon object isn't provided.
- * @param {number} typeCount - Optional override for number of types to display (default: actual type count, max 3).
- *                             Useful for custom Pokémon with specific type counts.
- * @returns {JSX.Element} The rendered PokemonCard with appropriate animations and state handling
+ * @param {Object} pokemon - Optional pre-loaded Pokemon data (contains id, name, weight, height, types[])
+ * @param {string|number} pokemonIdOrName - Pokemon ID or name to fetch (only used if pokemon object isn't provided)
+ * @param {number} typeCount - Optional override for how many types to use for styling (default: auto, max 3)
+ * @returns {JSX.Element} The rendered Pokemon card
  */
 const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
-    // UI and data states
-    const [isHovered, setIsHovered] = useState(false);
-    const [pokemonData, setPokemonData] = useState(pokemon || null);
-    const [imageUrl, setImageUrl] = useState(null);
-    const [isLoadingData, setIsLoadingData] = useState(!!pokemonIdOrName);
-    const [isLoadingImage, setIsLoadingImage] = useState(true);
-    const [error, setError] = useState(false);
-    const [isReady, setIsReady] = useState(!!pokemon);
+    // Component state variables
+    const [isHovered, setIsHovered] = useState(false); // Tracks if card is being hovered
+    const [pokemonData, setPokemonData] = useState(pokemon || null); // Stores Pokemon information
+    const [imageUrl, setImageUrl] = useState(null); // URL to Pokemon's image
+    const [isLoadingData, setIsLoadingData] = useState(!!pokemonIdOrName); // If we're fetching Pokemon data
+    const [isLoadingImage, setIsLoadingImage] = useState(true); // If we're loading the image
+    const [error, setError] = useState(false); // If data fetch encountered an error
+    const [isReady, setIsReady] = useState(!!pokemon); // If both data and image are ready
 
     /**
-     * Generate a unique key for the card based on the current Pokémon
-     * This is critical for AnimatePresence to properly track and animate each Pokémon card
-     * as they enter and exit the DOM, especially during transitions between different Pokémon
+     * A unique identifier for this card instance
+     *
+     * This key helps Framer Motion's AnimatePresence track card elements
+     * when they need to be added/removed from the DOM, ensuring smooth animations
+     * when a card changes to display a different Pokemon.
      */
     const [cardKey, setCardKey] = useState(() => {
         return (
@@ -67,13 +72,12 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
     });
 
     /**
-     * Reset states and update the cardKey when props change
-     * This effect runs whenever pokemon or pokemonIdOrName changes to:
-     * 1. Generate a new key to force AnimatePresence to treat this as a new card
-     * 2. Reset data states if we're changing to a different Pokémon
+     * Updates card when the Pokemon changes
      *
-     * The comparison logic ensures we only reset states when actually changing Pokémon,
-     * not on other re-renders.
+     * This effect handles:
+     * - Generating a new card key for animation tracking
+     * - Resetting state values to show loading states
+     * - Only resets when actually changing to a different Pokemon
      */
     useEffect(() => {
         // Generate a new key to force AnimatePresence to treat this as a new card
@@ -98,13 +102,13 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
     }, [pokemon, pokemonIdOrName]);
 
     /**
-     * Fetch Pokemon data if not provided directly
-     * This effect handles:
-     * 1. Using provided pokemon object directly if available
-     * 2. Fetching data from API when only ID/name is provided
-     * 3. Setting appropriate loading and error states
+     * Fetches Pokemon data when needed
      *
-     * The isReady state remains false until both data and image are loaded
+     * This effect either:
+     * - Uses the provided Pokemon object directly (if available)
+     * - Or fetches data from the API using the provided ID/name
+     *
+     * It also handles loading states and error handling.
      */
     useEffect(() => {
         if (pokemon) {
@@ -139,14 +143,12 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
     }, [pokemon, pokemonIdOrName]);
 
     /**
-     * Fetch Pokemon image once we have data
-     * This effect runs after pokemonData is loaded to:
-     * 1. Get the image URL for the Pokémon
-     * 2. Handle loading state for the image separately
-     * 3. Set fallback image if needed
-     * 4. Set isReady to true only after BOTH data AND image are loaded
+     * Fetches Pokemon image after we have the Pokemon data
      *
-     * This two-phase loading ensures we don't show partial content
+     * We load the image in a separate step to:
+     * - Show a loading spinner while image loads
+     * - Use a fallback Pokeball image if load fails
+     * - Only mark the card as ready when both data AND image are loaded
      */
     useEffect(() => {
         if (!pokemonData) {
@@ -174,21 +176,23 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
     }, [pokemonData]);
 
     /**
-     * Animation variants - Each of these defines how a specific part of the card
-     * should animate in different states (initial, hover, etc.)
+     * Animation configuration
      *
-     * The variants system in Framer Motion allows animation states to propagate
-     * down through children, creating coordinated animations across the card.
+     * Framer Motion uses "variants" to define how elements should animate.
+     * Each variant defines an animation state (like "initial" or "hover").
+     *
+     * When a parent element changes state, the change automatically propagates
+     * to children, creating coordinated animations across the card.
      */
 
-    // Main card animations (lift and shadow on hover)
+    // Main card animation (lifts up and adds shadow on hover)
     const cardVariants = {
         initial: {
             y: 0,
             boxShadow: "0px 0px 0px rgba(0,0,0,0)",
         },
         hover: {
-            y: -8,
+            y: -8, // Move up 8px
             boxShadow: "0px 10px 15px rgba(0,0,0,0.2)",
             transition: {
                 duration: 0.3,
@@ -197,7 +201,7 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
         },
     };
 
-    // Pokemon image animations (scale and wiggle on hover)
+    // Pokemon image animation (scales up and wiggles on hover)
     const imageVariants = {
         initial: {
             scale: 1,
@@ -205,7 +209,7 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
         },
         hover: {
             scale: 1.05,
-            rotate: [0, -1, 1, -1, 1, 0], // Array creates keyframe animation
+            rotate: [0, -1, 1, -1, 1, 0], // Sequence creates wiggle effect
             transition: {
                 scale: { duration: 0.2 },
                 rotate: {
@@ -217,91 +221,70 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
         },
     };
 
-    // Badge animations (slightly enlarge on hover)
+    // Animations for card elements
     const badgeVariants = {
         initial: { scale: 1 },
-        hover: {
-            scale: 1.05,
-            transition: {
-                duration: 0.2,
-                delay: 0.1,
-            },
-        },
+        hover: { scale: 1.05, transition: { duration: 0.2, delay: 0.1 } },
     };
 
-    // Accent fade out animations
     const accentVariants = {
         initial: { opacity: 1 },
-        hover: {
-            opacity: 0,
-            transition: { duration: 0.4 },
-        },
+        hover: { opacity: 0, transition: { duration: 0.4 } },
     };
 
-    // Border reveal animation
     const borderVariants = {
         initial: { opacity: 0 },
-        hover: {
-            opacity: 1,
-            transition: { duration: 0.4 },
-        },
+        hover: { opacity: 1, transition: { duration: 0.4 } },
     };
 
     /**
-     * Card appearance/exit animations - These control how the card
-     * enters and exits the DOM during state transitions
+     * Animations for card entering and exiting the DOM
      *
-     * These are used with AnimatePresence to create smooth transitions
-     * between loading, error, and ready states
+     * These control how the card appears and disappears when switching
+     * between loading, error, and ready states.
      */
     const containerVariants = {
         exit: {
+            // When card is being removed
             opacity: 0,
             scale: 0.95,
-            transition: {
-                duration: 0.2,
-                ease: "easeIn",
-            },
+            transition: { duration: 0.2, ease: "easeIn" },
         },
         enter: {
+            // When card is being added
             opacity: 1,
             scale: 1,
-            transition: {
-                duration: 0.3,
-                ease: "easeOut",
-            },
+            transition: { duration: 0.3, ease: "easeOut" },
         },
     };
 
     /**
-     * Calculate styling parameters for the Pokémon card based on types
-     * - effectiveTypeCount: Determines which styling logic to use (1, 2, or 3 types)
-     * - typeColors: Array of type names converted to lowercase for CSS
-     * - primaryType/secondaryType/tertiaryType: Used for various styling elements
+     * Get Pokemon type information for styling
+     *
+     * This extracts standardized type information, which is used
+     * throughout the card for consistent type-based styling.
      */
-    const effectiveTypeCount = pokemonData
-        ? typeCount !== null
-            ? typeCount
-            : Math.min(pokemonData.types.length, 3)
-        : 1;
+    const typeInfo = pokemonData
+        ? extractTypeInfo(pokemonData, typeCount)
+        : {
+              effectiveTypeCount: 1,
+              primaryType: "normal",
+              secondaryType: "normal",
+              tertiaryType: "normal",
+          };
 
-    const typeColors = pokemonData
-        ? pokemonData.types.map((type) => type.toLowerCase())
-        : ["normal"];
+    const { effectiveTypeCount, primaryType, secondaryType, tertiaryType } =
+        typeInfo;
 
-    const primaryType = typeColors[0] || "normal";
-    const secondaryType = typeColors[1] || primaryType;
-    const tertiaryType = typeColors[2] || secondaryType;
-
-    // Render the component with AnimatePresence for smooth transitions between states
+    /**
+     * Render different card states based on loading/error status
+     *
+     * The AnimatePresence component handles smooth transitions between
+     * the three possible states: loading, error, and ready
+     */
     return (
         <AnimatePresence mode="wait">
-            {/* 
-              LOADING STATE
-              Shows when data is being fetched from the API
-              Displays a spinning animation inside a skeleton loader
-              Animates in and out with opacity transitions
-            */}
+            {/* LOADING STATE - Shows spinner while fetching data */}
             {isLoadingData && (
                 <motion.div
                     key={`loading-${cardKey}`}
@@ -332,12 +315,7 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
                 </motion.div>
             )}
 
-            {/* 
-              ERROR STATE
-              Shows when API fetch fails or Pokémon isn't found
-              Displays a gently rocking Pokéball with error message
-              Animates in and out with opacity and vertical movement
-            */}
+            {/* ERROR STATE - Shows message when Pokemon can't be found */}
             {!isLoadingData && (error || (!pokemonData && !isLoadingData)) && (
                 <motion.div
                     key={`error-${cardKey}`}
@@ -376,18 +354,7 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
                 </motion.div>
             )}
 
-            {/* 
-              READY STATE - POKEMON CARD
-              Shows when data and image are both successfully loaded
-              Features interactive hover animations and type-based styling
-              
-              The structure consists of:
-              1. Outer motion.div with enter/exit animations
-              2. Inner motion.div with hover animations
-              3. Card with background styling based on Pokémon types
-              4. Various animated elements (corners, borders, badges, etc.)
-              5. Content sections with Pokémon details
-            */}
+            {/* READY STATE - Displays the fully loaded Pokemon card */}
             {!isLoadingData && !error && pokemonData && isReady && (
                 <motion.div
                     key={`card-${cardKey}`}
@@ -413,77 +380,49 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
                                 pokemonData.types
                             )}
                         >
-                            {/* Top-left corner accent - Fades out on hover */}
+                            {/* Visual accents - Add depth with type-based colors */}
                             <motion.div
                                 variants={accentVariants}
                                 className="absolute top-0 left-0 size-[90px] rounded-tl-xl pointer-events-none"
-                                style={{
-                                    boxShadow:
-                                        effectiveTypeCount === 1
-                                            ? `inset 4px 4px 0 0 rgb(from var(--color-pokemon-${primaryType}) r g b / 0.5)`
-                                            : effectiveTypeCount === 2
-                                            ? `inset 4px 4px 0 0 rgb(from var(--color-pokemon-${primaryType}) r g b / 0.7)`
-                                            : `inset 4px 4px 0 0 rgb(from var(--color-pokemon-${primaryType}) r g b / 0.6)`,
-                                    filter: "blur(2px)",
-                                    maskImage:
-                                        "linear-gradient(135deg, rgba(0,0,0,1) 5%, rgba(0,0,0,0.9) 10%, rgba(0,0,0,0.8) 15%, rgba(0,0,0,0.7) 20%, rgba(0,0,0,0.6) 25%, rgba(0,0,0,0.5) 30%, rgba(0,0,0,0.4) 35%, rgba(0,0,0,0.3) 40%, rgba(0,0,0,0.2) 45%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.1) 55%, rgba(0,0,0,0.05) 60%, transparent 70%)",
-                                    WebkitMaskImage:
-                                        "linear-gradient(135deg, rgba(0,0,0,1) 5%, rgba(0,0,0,0.9) 10%, rgba(0,0,0,0.8) 15%, rgba(0,0,0,0.7) 20%, rgba(0,0,0,0.6) 25%, rgba(0,0,0,0.5) 30%, rgba(0,0,0,0.4) 35%, rgba(0,0,0,0.3) 40%, rgba(0,0,0,0.2) 45%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.1) 55%, rgba(0,0,0,0.05) 60%, transparent 70%)",
-                                }}
+                                style={getTopLeftAccentStyle(
+                                    effectiveTypeCount,
+                                    primaryType
+                                )}
                             />
 
-                            {/* Bottom-right corner accent - Fades out on hover */}
+                            {/* Bottom-right accent */}
                             <motion.div
                                 variants={accentVariants}
                                 className="absolute bottom-0 right-0 size-[90px] rounded-br-xl pointer-events-none"
-                                style={{
-                                    boxShadow:
-                                        effectiveTypeCount === 1
-                                            ? `inset -4px -4px 0 0 rgb(from var(--color-pokemon-${primaryType}) r g b / 0.5)`
-                                            : effectiveTypeCount === 2
-                                            ? `inset -4px -4px 0 0 rgb(from var(--color-pokemon-${secondaryType}) r g b / 0.7)`
-                                            : `inset -4px -4px 0 0 rgb(from var(--color-pokemon-${tertiaryType}) r g b / 0.6)`,
-                                    filter: "blur(2px)",
-                                    maskImage:
-                                        "linear-gradient(315deg, rgba(0,0,0,1) 5%, rgba(0,0,0,0.9) 10%, rgba(0,0,0,0.8) 15%, rgba(0,0,0,0.7) 20%, rgba(0,0,0,0.6) 25%, rgba(0,0,0,0.5) 30%, rgba(0,0,0,0.4) 35%, rgba(0,0,0,0.3) 40%, rgba(0,0,0,0.2) 45%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.1) 55%, rgba(0,0,0,0.05) 60%, transparent 70%)",
-                                    WebkitMaskImage:
-                                        "linear-gradient(315deg, rgba(0,0,0,1) 5%, rgba(0,0,0,0.9) 10%, rgba(0,0,0,0.8) 15%, rgba(0,0,0,0.7) 20%, rgba(0,0,0,0.6) 25%, rgba(0,0,0,0.5) 30%, rgba(0,0,0,0.4) 35%, rgba(0,0,0,0.3) 40%, rgba(0,0,0,0.2) 45%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.1) 55%, rgba(0,0,0,0.05) 60%, transparent 70%)",
-                                }}
+                                style={getBottomRightAccentStyle(
+                                    effectiveTypeCount,
+                                    primaryType,
+                                    secondaryType,
+                                    tertiaryType
+                                )}
                             />
 
-                            {/* Side accents - Only for triple-type Pokémon */}
+                            {/* Side accents - Only shown for triple-type Pokemon */}
                             {effectiveTypeCount === 3 && (
                                 <>
                                     <motion.div
                                         variants={accentVariants}
                                         className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-[180px] pointer-events-none z-[2] opacity-70"
-                                        style={{
-                                            borderRight: `4px solid rgb(from var(--color-pokemon-${secondaryType}) r g b / 0.15)`,
-                                            boxShadow: `0 0 10px 2px rgb(from var(--color-pokemon-${secondaryType}) r g b / 0.08)`,
-                                            filter: "blur(3px)",
-                                            maskImage:
-                                                "linear-gradient(to left, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 30%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.1) 80%, transparent 100%)",
-                                            WebkitMaskImage:
-                                                "linear-gradient(to left, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 30%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.1) 80%, transparent 100%)",
-                                        }}
+                                        style={getRightSideAccentStyle(
+                                            secondaryType
+                                        )}
                                     />
                                     <motion.div
                                         variants={accentVariants}
                                         className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-[180px] pointer-events-none z-[2] opacity-70"
-                                        style={{
-                                            borderLeft: `4px solid rgb(from var(--color-pokemon-${secondaryType}) r g b / 0.15)`,
-                                            boxShadow: `0 0 10px 2px rgb(from var(--color-pokemon-${secondaryType}) r g b / 0.08)`,
-                                            filter: "blur(3px)",
-                                            maskImage:
-                                                "linear-gradient(to right, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 30%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.1) 80%, transparent 100%)",
-                                            WebkitMaskImage:
-                                                "linear-gradient(to right, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 30%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.1) 80%, transparent 100%)",
-                                        }}
+                                        style={getLeftSideAccentStyle(
+                                            secondaryType
+                                        )}
                                     />
                                 </>
                             )}
 
-                            {/* Hover border effect - Appears on hover */}
+                            {/* Animated border - Appears on hover */}
                             <motion.div
                                 variants={borderVariants}
                                 className="absolute inset-0 rounded-xl border-4 border-transparent pointer-events-none overflow-hidden"
@@ -500,9 +439,9 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
                                 }}
                             />
 
-                            {/* Card content - Main structure with Pokémon details */}
+                            {/* Main Card Content */}
                             <div className="relative z-[1] h-full flex flex-col justify-between">
-                                {/* ID Badge - Top left */}
+                                {/* Pokemon ID badge */}
                                 <CardHeader className="p-0 m-0">
                                     <motion.div variants={badgeVariants}>
                                         <Badge
@@ -515,12 +454,12 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
                                     </motion.div>
                                 </CardHeader>
 
-                                {/* Main content area with image and name */}
+                                {/* Pokemon image and details */}
                                 <CardContent
                                     data-slot="content"
                                     className="p-0 flex-1 flex flex-col items-center justify-center"
                                 >
-                                    {/* Image container with circular background */}
+                                    {/* Pokemon image with animated container */}
                                     <div className="size-[180px] bg-[rgba(61,61,61,0.7)] rounded-full mx-auto mt-8 mb-5 flex items-center justify-center relative overflow-hidden">
                                         {isLoadingImage ? (
                                             <Skeleton className="size-[150px] rounded-full flex items-center justify-center">
@@ -549,14 +488,16 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
                                             />
                                         )}
 
-                                        {/* Subtle circular glow effect behind the image */}
+                                        {/* Type-colored glow effect (appears on hover) */}
                                         <motion.div
                                             className="absolute inset-0 rounded-full pointer-events-none z-[-1]"
                                             initial={{ opacity: 0.3 }}
                                             variants={{
                                                 hover: {
                                                     opacity: 0.6,
-                                                    boxShadow: `inset 0 0 20px 5px rgb(from var(--color-pokemon-${primaryType}) r g b / 0.3)`,
+                                                    ...getImageGlowStyle(
+                                                        primaryType
+                                                    ),
                                                     transition: {
                                                         duration: 0.3,
                                                     },
@@ -565,7 +506,7 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
                                         />
                                     </div>
 
-                                    {/* Pokémon name */}
+                                    {/* Pokemon name - animates on hover */}
                                     <motion.div
                                         className="text-center text-2xl font-bold my-2 text-white"
                                         variants={{
@@ -579,7 +520,7 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
                                         {pokemonData.name}
                                     </motion.div>
 
-                                    {/* Stats area (weight and height) */}
+                                    {/* Basic stats - weight and height */}
                                     <div className="flex justify-around w-full my-4">
                                         <motion.div
                                             className="flex flex-col items-center"
@@ -622,7 +563,7 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
                                     </div>
                                 </CardContent>
 
-                                {/* Type badges at the bottom of the card */}
+                                {/* Type badges - color-coded for each Pokemon type */}
                                 <CardFooter
                                     data-slot="footer"
                                     className="p-0 flex justify-center gap-2 mt-4 mb-4 flex-wrap"
