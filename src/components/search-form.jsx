@@ -12,9 +12,14 @@ export function SearchForm({ ...props }) {
                 <Input
                     id="search"
                     placeholder="Search Pokémon..."
-                    className="h-8 w-2xs pl-7 border-0 bg-accent-foreground/80 rounded-lg text-white/70 placeholder:text-white/70 placeholder:opacity-50 focus-visible:border focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
+                    className="h-9 w-[200px] lg:w-[250px] pl-8 rounded-full border-muted-foreground/30 bg-background/80 
+                    text-foreground/80 placeholder:text-foreground/50 focus-visible:border-primary 
+                    focus-visible:ring-1 focus-visible:ring-primary dark:bg-muted/30"
                 />
-                <Search className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 select-none text-pokrmon-unknown/50" />
+                <Search
+                    className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 
+                select-none text-pokemon-unknown/50"
+                />
             </div>
         </form>
     );

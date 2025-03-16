@@ -11,30 +11,30 @@
 @custom-variant dark (&:is(.dark *));
 
 /* 
-  * Light theme variables
-  * Base UI colors use OKLCH for better color reproduction
-  */
+   * Light theme variables
+   * Base UI colors use OKLCH for better color reproduction
+   */
 :root {
     /* Core UI colors */
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.141 0.005 285.823);
+    --background: oklch(0.98 0 0);
+    --foreground: oklch(0.2 0.02 240);
     --card: oklch(1 0 0);
-    --card-foreground: oklch(0.141 0.005 285.823);
+    --card-foreground: oklch(0.2 0.02 240);
     --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.141 0.005 285.823);
-    --primary: oklch(0.21 0.006 285.885);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.967 0.001 286.375);
-    --secondary-foreground: oklch(0.21 0.006 285.885);
-    --muted: oklch(0.967 0.001 286.375);
-    --muted-foreground: oklch(0.552 0.016 285.938);
-    --accent: oklch(0.967 0.001 286.375);
-    --accent-foreground: oklch(0.21 0.006 285.885);
-    --destructive: oklch(0.577 0.245 27.325);
-    --destructive-foreground: oklch(0.577 0.245 27.325);
-    --border: oklch(0.92 0.004 286.32);
-    --input: oklch(0.92 0.004 286.32);
-    --ring: oklch(0.705 0.015 286.067);
+    --popover-foreground: oklch(0.2 0.02 240);
+    --primary: oklch(0.63 0.16 139.92); /* Pokemon Grass green */
+    --primary-foreground: oklch(0.98 0 0);
+    --secondary: oklch(0.92 0.02 240);
+    --secondary-foreground: oklch(0.2 0.02 240);
+    --muted: oklch(0.92 0.02 240);
+    --muted-foreground: oklch(0.5 0.02 240);
+    --accent: oklch(0.53 0.18 262.81); /* Pokemon Water blue */
+    --accent-foreground: oklch(0.98 0 0);
+    --destructive: oklch(0.64 0.17 45.34); /* Pokemon Fire red */
+    --destructive-foreground: oklch(0.98 0 0);
+    --border: oklch(0.85 0.02 240);
+    --input: oklch(0.85 0.02 240);
+    --ring: oklch(0.63 0.16 139.92); /* Pokemon Grass green */
 
     /* Chart colors */
     --chart-1: oklch(0.646 0.222 41.116);
@@ -47,16 +47,16 @@
     --radius: 0.625rem;
 
     /* Sidebar theming */
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.141 0.005 285.823);
-    --sidebar-primary: oklch(0.21 0.006 285.885);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.967 0.001 286.375);
-    --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
-    --sidebar-border: oklch(0.92 0.004 286.32);
-    --sidebar-ring: oklch(0.705 0.015 286.067);
+    --sidebar: oklch(0.98 0 0);
+    --sidebar-foreground: oklch(0.2 0.02 240);
+    --sidebar-primary: oklch(0.63 0.16 139.92); /* Pokemon Grass green */
+    --sidebar-primary-foreground: oklch(0.98 0 0);
+    --sidebar-accent: oklch(0.92 0.02 240);
+    --sidebar-accent-foreground: oklch(0.2 0.02 240);
+    --sidebar-border: oklch(0.85 0.02 240);
+    --sidebar-ring: oklch(0.63 0.16 139.92); /* Pokemon Grass green */
 
-    /* Pokemon type colors - optimized for light mode contrast */
+    /* Pokemon type colors - preserve existing values */
     --color-pokemon-grass: oklch(0.63 0.16 139.92 / 1);
     --color-pokemon-poison: oklch(0.48 0.17 327.87 / 1);
     --color-pokemon-fire: oklch(0.64 0.17 45.34 / 1);
@@ -80,75 +80,81 @@
 }
 
 /* 
-  * Dark theme variables
-  * Inverts most color relationships compared to light theme
-  */
+   * Dark theme variables - matched to the mockup
+   * Inverts most color relationships and uses darker background
+   */
 .dark {
     /* Core UI colors */
-    --background: oklch(0.141 0.005 285.823);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.141 0.005 285.823);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.141 0.005 285.823);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.985 0 0);
-    --primary-foreground: oklch(0.21 0.006 285.885);
-    --secondary: oklch(0.274 0.006 286.033);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.274 0.006 286.033);
-    --muted-foreground: oklch(0.705 0.015 286.067);
-    --accent: oklch(0.274 0.006 286.033);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.396 0.141 25.723);
-    --destructive-foreground: oklch(0.637 0.237 25.331);
-    --border: oklch(0.274 0.006 286.033);
-    --input: oklch(0.274 0.006 286.033);
-    --ring: oklch(0.442 0.017 285.786);
+    --background: oklch(
+        0.12 0.02 240
+    ); /* Very dark background like in mockup */
+    --foreground: oklch(0.98 0 0);
+    --card: oklch(
+        0.15 0.02 240
+    ); /* Slightly lighter than background for cards */
+    --card-foreground: oklch(0.98 0 0);
+    --popover: oklch(0.15 0.02 240);
+    --popover-foreground: oklch(0.98 0 0);
+    --primary: oklch(
+        0.63 0.16 139.92
+    ); /* Pokemon Grass green - same as in mockup */
+    --primary-foreground: oklch(0.98 0 0);
+    --secondary: oklch(0.22 0.02 240);
+    --secondary-foreground: oklch(0.98 0 0);
+    --muted: oklch(0.22 0.02 240);
+    --muted-foreground: oklch(0.7 0.02 240);
+    --accent: oklch(0.53 0.18 262.81); /* Pokemon Water blue */
+    --accent-foreground: oklch(0.98 0 0);
+    --destructive: oklch(0.64 0.17 45.34); /* Pokemon Fire red */
+    --destructive-foreground: oklch(0.98 0 0);
+    --border: oklch(0.22 0.02 240);
+    --input: oklch(0.22 0.02 240);
+    --ring: oklch(0.63 0.16 139.92); /* Pokemon Grass green */
 
     /* Chart colors */
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
+    --chart-1: oklch(0.63 0.16 139.92); /* Grass green */
+    --chart-2: oklch(0.53 0.18 262.81); /* Water blue */
+    --chart-3: oklch(0.769 0.188 70.08); /* Yellowish */
+    --chart-4: oklch(0.627 0.265 303.9); /* Purple */
+    --chart-5: oklch(0.645 0.246 16.439); /* Red */
 
     /* Sidebar theming */
-    --sidebar: oklch(0.21 0.006 285.885);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.274 0.006 286.033);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(0.274 0.006 286.033);
-    --sidebar-ring: oklch(0.442 0.017 285.786);
+    --sidebar: oklch(0.1 0.02 240); /* Even darker sidebar than background */
+    --sidebar-foreground: oklch(0.98 0 0);
+    --sidebar-primary: oklch(0.63 0.16 139.92); /* Pokemon Grass green */
+    --sidebar-primary-foreground: oklch(0.98 0 0);
+    --sidebar-accent: oklch(0.22 0.02 240);
+    --sidebar-accent-foreground: oklch(0.98 0 0);
+    --sidebar-border: oklch(0.22 0.02 240);
+    --sidebar-ring: oklch(0.63 0.16 139.92); /* Pokemon Grass green */
 
-    /* Pokemon type colors - brightened for dark mode visibility */
-    --color-pokrmon-grass: oklch(0.69 0.16 139.78 / 1);
-    --color-pokrmon-poison: oklch(0.54 0.17 327.65 / 1);
-    --color-pokrmon-fire: oklch(0.7 0.17 48.44 / 1);
-    --color-pokrmon-flying: oklch(0.65 0.14 293.6 / 1);
-    --color-pokrmon-water: oklch(0.59 0.18 263.09 / 1);
-    --color-pokrmon-bug: oklch(0.71 0.15 116.6 / 1);
-    --color-pokrmon-normal: oklch(0.68 0.06 107.79 / 1);
-    --color-pokrmon-electric: oklch(0.84 0.16 93.25 / 1);
-    --color-pokrmon-ground: oklch(0.76 0.11 89.51 / 1);
-    --color-pokrmon-fairy: oklch(0.71 0.11 5.67 / 1);
-    --color-pokrmon-fighting: oklch(0.53 0.16 27.68 / 1);
-    --color-pokrmon-psychic: oklch(0.66 0.2 6.24 / 1);
-    --color-pokrmon-rock: oklch(0.68 0.11 93.39 / 1);
-    --color-pokrmon-steel: oklch(0.73 0.03 285.51 / 1);
-    --color-pokrmon-ice: oklch(0.75 0.07 195.84 / 1);
-    --color-pokrmon-ghost: oklch(0.51 0.1 300.12 / 1);
-    --color-pokrmon-dragon: oklch(0.53 0.23 289.18 / 1);
-    --color-pokrmon-dark: oklch(0.55 0.04 55.44 / 1);
-    --color-pokrmon-stellar: oklch(0.7 0.11 182.44 / 1);
-    --color-pokrmon-unknown: oklch(0.66 0.06 174.02 / 1);
+    /* Pokemon type colors - fixing typo in variable names and preserving values */
+    --color-pokemon-grass: oklch(0.69 0.16 139.78 / 1);
+    --color-pokemon-poison: oklch(0.54 0.17 327.65 / 1);
+    --color-pokemon-fire: oklch(0.7 0.17 48.44 / 1);
+    --color-pokemon-flying: oklch(0.65 0.14 293.6 / 1);
+    --color-pokemon-water: oklch(0.59 0.18 263.09 / 1);
+    --color-pokemon-bug: oklch(0.71 0.15 116.6 / 1);
+    --color-pokemon-normal: oklch(0.68 0.06 107.79 / 1);
+    --color-pokemon-electric: oklch(0.84 0.16 93.25 / 1);
+    --color-pokemon-ground: oklch(0.76 0.11 89.51 / 1);
+    --color-pokemon-fairy: oklch(0.71 0.11 5.67 / 1);
+    --color-pokemon-fighting: oklch(0.53 0.16 27.68 / 1);
+    --color-pokemon-psychic: oklch(0.66 0.2 6.24 / 1);
+    --color-pokemon-rock: oklch(0.68 0.11 93.39 / 1);
+    --color-pokemon-steel: oklch(0.73 0.03 285.51 / 1);
+    --color-pokemon-ice: oklch(0.75 0.07 195.84 / 1);
+    --color-pokemon-ghost: oklch(0.51 0.1 300.12 / 1);
+    --color-pokemon-dragon: oklch(0.53 0.23 289.18 / 1);
+    --color-pokemon-dark: oklch(0.55 0.04 55.44 / 1);
+    --color-pokemon-stellar: oklch(0.7 0.11 182.44 / 1);
+    --color-pokemon-unknown: oklch(0.66 0.06 174.02 / 1);
 }
 
 /* 
-  * Tailwind v4 theme mapping
-  * Maps CSS variables to theme values using @theme inline directive
-  */
+   * Tailwind v4 theme mapping
+   * Maps CSS variables to theme values using @theme inline directive
+   */
 @theme inline {
     /* Map core UI variables */
     --color-background: var(--background);
