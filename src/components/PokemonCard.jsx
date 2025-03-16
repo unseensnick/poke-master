@@ -12,7 +12,11 @@ import {
     getTopLeftAccentStyle,
     getTypeStyle,
 } from "@/lib/pokemon-styles";
-import { getPokemon, getPokemonImage } from "@/services/pokemon-service";
+import {
+    getPokemon,
+    getPokemonImage,
+    initializePokemon,
+} from "@/services/pokemon-service";
 import { AnimatePresence, motion } from "framer-motion";
 import React, { useEffect, useState } from "react";
 
@@ -27,23 +31,22 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
- * PokemonCard - Interactive, animated card for displaying Pokémon with type-based styling
+ * PokemonCard - Interactive, visually rich card component for displaying Pokémon
  *
- * This component shows details about a Pokémon with visual styles based on its type(s).
- * It features smooth animations, loading states, and hover effects.
+ * Renders a Pokémon with dynamic styling based on its type(s), featuring smooth animations,
+ * loading states, and interactive hover effects. The card adapts its appearance based
+ * on the Pokémon's primary, secondary, and (if applicable) tertiary types.
  *
- * Key features:
- * - Shows Pokemon image, name, ID, weight, height, and types
- * - Colors and styles change based on Pokemon's type(s)
- * - Animated hover effects with coordinated animations across card elements
- * - Loading spinner while fetching data
- * - Error state with helpful message if Pokemon can't be found
- * - Can either fetch Pokemon data automatically or use pre-loaded data
+ * Core features:
+ * - Dynamic data fetching from API or direct data input
+ * - Type-based theming with gradients and accents
+ * - Animated transitions between loading, error, and data states
+ * - Interactive hover effects with coordinated animations
  *
- * @param {Object} pokemon - Optional pre-loaded Pokemon data (contains id, name, weight, height, types[])
- * @param {string|number} pokemonIdOrName - Pokemon ID or name to fetch (only used if pokemon object isn't provided)
- * @param {number} typeCount - Optional override for how many types to use for styling (default: auto, max 3)
- * @returns {JSX.Element} The rendered Pokemon card
+ * @param {Object} pokemon - Optional pre-loaded Pokémon data (if provided, API fetch is skipped)
+ * @param {string|number} pokemonIdOrName - Pokémon ID or name to fetch (only used if pokemon object isn't provided)
+ * @param {number} typeCount - Optional limit for how many types to use for styling (default: auto detect, max 3)
+ * @returns {JSX.Element} The rendered Pokémon card with appropriate loading/error/data states
  */
 const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
     // Component state variables
@@ -56,13 +59,17 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
     const [isReady, setIsReady] = useState(!!pokemon); // If both data and image are ready
 
     /**
-     * A unique identifier for this card instance
+     * Unique identifier for tracking card transitions
      *
-     * This key helps Framer Motion's AnimatePresence track card elements
-     * when they need to be added/removed from the DOM, ensuring smooth animations
-     * when a card changes to display a different Pokemon.
+     * Used by Framer Motion's AnimatePresence to properly track and animate cards
+     * when they're added or removed from the DOM, ensuring smooth transitions when
+     * switching between different Pokémon.
      */
     const [cardKey, setCardKey] = useState(() => {
+        // Check if this is a custom Pokemon by ID first, before any API calls
+        if (pokemon) {
+            initializePokemon(pokemon);
+        }
         return (
             pokemon?.id ||
             pokemon?.name ||
@@ -72,12 +79,11 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
     });
 
     /**
-     * Updates card when the Pokemon changes
+     * Updates card when the Pokémon changes
      *
-     * This effect handles:
-     * - Generating a new card key for animation tracking
-     * - Resetting state values to show loading states
-     * - Only resets when actually changing to a different Pokemon
+     * Handles generating a new key for animations and resetting state values.
+     * Only performs a full reset when actually switching to a different Pokémon,
+     * preventing unnecessary re-renders and API calls.
      */
     useEffect(() => {
         // Generate a new key to force AnimatePresence to treat this as a new card
@@ -102,13 +108,10 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
     }, [pokemon, pokemonIdOrName]);
 
     /**
-     * Fetches Pokemon data when needed
+     * Main data fetching effect - Loads Pokémon data
      *
-     * This effect either:
-     * - Uses the provided Pokemon object directly (if available)
-     * - Or fetches data from the API using the provided ID/name
-     *
-     * It also handles loading states and error handling.
+     * Either uses direct data from props or fetches from API.
+     * Manages loading states and handles errors gracefully.
      */
     useEffect(() => {
         if (pokemon) {
@@ -143,12 +146,11 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
     }, [pokemon, pokemonIdOrName]);
 
     /**
-     * Fetches Pokemon image after we have the Pokemon data
+     * Secondary fetch effect - Loads Pokémon image
      *
-     * We load the image in a separate step to:
-     * - Show a loading spinner while image loads
-     * - Use a fallback Pokeball image if load fails
-     * - Only mark the card as ready when both data AND image are loaded
+     * Separated from main data fetch to allow independent loading states.
+     * This separation allows showing a spinner during image load while
+     * already displaying other Pokémon details.
      */
     useEffect(() => {
         if (!pokemonData) {
@@ -178,11 +180,10 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
     /**
      * Animation configuration
      *
-     * Framer Motion uses "variants" to define how elements should animate.
-     * Each variant defines an animation state (like "initial" or "hover").
-     *
-     * When a parent element changes state, the change automatically propagates
-     * to children, creating coordinated animations across the card.
+     * Framer Motion uses "variants" to define animation states.
+     * These variants create a coordinated animation system where
+     * parent elements can drive child animations, making complex
+     * interactions feel cohesive and natural.
      */
 
     // Main card animation (lifts up and adds shadow on hover)
@@ -238,20 +239,18 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
     };
 
     /**
-     * Animations for card entering and exiting the DOM
+     * Card mount/unmount animations
      *
-     * These control how the card appears and disappears when switching
+     * Controls how the card appears and disappears when switching
      * between loading, error, and ready states.
      */
     const containerVariants = {
         exit: {
-            // When card is being removed
             opacity: 0,
             scale: 0.95,
             transition: { duration: 0.2, ease: "easeIn" },
         },
         enter: {
-            // When card is being added
             opacity: 1,
             scale: 1,
             transition: { duration: 0.3, ease: "easeOut" },
@@ -259,10 +258,10 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
     };
 
     /**
-     * Get Pokemon type information for styling
+     * Extracts type information for styling
      *
-     * This extracts standardized type information, which is used
-     * throughout the card for consistent type-based styling.
+     * Determines primary, secondary, and tertiary types to use for
+     * various visual elements like backgrounds, borders, and accents.
      */
     const typeInfo = pokemonData
         ? extractTypeInfo(pokemonData, typeCount)
@@ -277,10 +276,12 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
         typeInfo;
 
     /**
-     * Render different card states based on loading/error status
+     * Render component with conditional states
      *
-     * The AnimatePresence component handles smooth transitions between
-     * the three possible states: loading, error, and ready
+     * AnimatePresence handles smooth transitions between three possible states:
+     * 1. Loading - Shows spinner while fetching data
+     * 2. Error - Shows message when Pokemon can't be found
+     * 3. Ready - Displays the fully loaded Pokemon card
      */
     return (
         <AnimatePresence mode="wait">

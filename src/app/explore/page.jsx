@@ -2,7 +2,7 @@ import PokemonCard from "@/components/PokemonCard";
 
 export default function ExplorePage() {
     const elementrio = {
-        id: "???",
+        id: "????",
         name: "Elementrio",
         weight: "45.2",
         height: "1.3",

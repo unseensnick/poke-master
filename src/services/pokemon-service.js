@@ -1,174 +1,353 @@
+import {
+    fetchFromApi,
+    formatPokemonData,
+    POKE_BALL,
+    QUESTION_MARK,
+    SPRITE_URLS,
+} from "@/lib/pokemon-api";
+
 /**
- * Pokemon API service with 24-hour caching to reduce API calls
- * Provides methods for fetching Pokemon data with error handling and fallbacks
+ * In-memory cache for Pokemon data and images to reduce API requests
+ *
+ * This simple caching system significantly improves performance by:
+ * - Eliminating redundant API calls for the same Pokemon
+ * - Preventing image re-fetching during component remounts
+ * - Enabling instant display of previously viewed Pokemon
  */
-
-import { fetchPokemon, fetchPokemonImage, POKE_BALL } from "@/lib/pokemon-api";
-
-// Cache configuration
 const pokemonCache = new Map();
 const imageCache = new Map();
-const CACHE_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
 /**
- * Checks if cached item is still valid
- * @param {Object} cachedItem - Item from cache with timestamp
- * @returns {boolean} True if cache is valid, false otherwise
+ * Registry of custom Pokemon names to prevent unnecessary API calls
+ *
+ * When we identify a custom Pokemon (one not in the official API),
+ * we store its name here to avoid future API requests that would fail.
  */
-const isCacheValid = (cachedItem) => {
-    if (!cachedItem || !cachedItem.timestamp) return false;
-    return Date.now() - cachedItem.timestamp < CACHE_EXPIRY;
+const customPokemonNames = new Set();
+
+/**
+ * Determines if a Pokemon ID indicates a custom/unofficial Pokemon
+ *
+ * Custom Pokemon can be identified by:
+ * - Question marks in the ID
+ * - IDs beyond the official Pokedex range (currently >2000)
+ *
+ * This check prevents unnecessary API calls for Pokemon we know don't exist
+ * in the official API.
+ *
+ * @param {string|number} id - Pokemon ID to check
+ * @returns {boolean} True if the ID suggests a custom Pokemon
+ */
+const isCustomId = (id) => {
+    if (!id) return false;
+
+    // Check for question marks in ID
+    if (String(id).includes("?")) return true;
+
+    // Check for out-of-range IDs (beyond official Pokedex)
+    const numId = parseInt(id);
+    if (!isNaN(numId) && numId > 2000) return true;
+
+    return false;
 };
 
 /**
- * Gets Pokemon data with caching
+ * Registers a Pokemon name as custom to prevent future API calls
+ *
+ * Once we know a Pokemon is custom (not in the official API),
+ * we add it to our registry to prevent redundant API calls.
+ *
+ * @param {string} name - Pokemon name to register as custom
+ */
+const registerCustomPokemon = (name) => {
+    if (name) {
+        const nameLower = String(name).toLowerCase();
+        if (!customPokemonNames.has(nameLower)) {
+            console.log(`Registering ${name} as a custom Pokemon`);
+            customPokemonNames.add(nameLower);
+        }
+    }
+};
+
+/**
+ * Initializes a Pokemon from direct data before any API calls
+ *
+ * This function is critical for handling custom Pokemon passed directly to components.
+ * It checks if the provided Pokemon data indicates a custom Pokemon and registers it
+ * accordingly to prevent unnecessary API calls.
+ *
+ * @param {Object} pokemonData - Direct Pokemon data object
+ * @returns {boolean} True if the Pokemon was registered as custom
+ */
+export const initializePokemon = (pokemonData) => {
+    if (!pokemonData || !pokemonData.name) return false;
+
+    // Check if this Pokemon has a custom ID
+    if (pokemonData.id && isCustomId(pokemonData.id)) {
+        // Register the name to prevent future API calls
+        registerCustomPokemon(pokemonData.name);
+        return true;
+    }
+
+    return false;
+};
+
+/**
+ * Fetches Pokemon data with intelligent caching
+ *
+ * This function optimizes Pokemon data retrieval by:
+ * 1. Checking the cache first to avoid redundant API calls
+ * 2. Detecting custom Pokemon to skip API calls that would fail
+ * 3. Standardizing data format for consistent use throughout the app
  *
  * @param {string|number} idOrName - Pokemon ID or name
- * @returns {Promise<Object|null>} - Pokemon data or null if not found
+ * @returns {Promise<Object|null>} - Formatted Pokemon data or null if not found
  */
 export const getPokemon = async (idOrName) => {
     if (!idOrName) return null;
 
-    const cacheKey = idOrName.toString().toLowerCase().trim();
-    if (cacheKey === "") return null;
+    const cacheKey = String(idOrName).toLowerCase().trim();
 
-    // Try cache first
-    const cachedPokemon = pokemonCache.get(cacheKey);
-    if (cachedPokemon && isCacheValid(cachedPokemon)) {
-        return cachedPokemon.data;
+    // Check cache first
+    if (pokemonCache.has(cacheKey)) {
+        return pokemonCache.get(cacheKey);
+    }
+
+    // If ID suggests this is a custom Pokemon, skip API call
+    if (isCustomId(idOrName)) {
+        console.log(`${idOrName} is a custom Pokemon ID, skipping API call`);
+        registerCustomPokemon(idOrName);
+        return null;
+    }
+
+    // Check if this name is already known to be a custom Pokemon
+    if (customPokemonNames.has(cacheKey)) {
+        console.log(`${idOrName} is a known custom Pokemon, skipping API call`);
+        return null;
     }
 
     try {
-        // Fetch fresh data
-        const pokemonData = await fetchPokemon(idOrName);
-        pokemonCache.set(cacheKey, {
-            data: pokemonData,
-            timestamp: Date.now(),
-        });
-        return pokemonData;
-    } catch (error) {
-        // Fall back to expired cache if available
-        if (cachedPokemon) {
-            console.warn(`Using expired cache for Pokemon ${idOrName}`);
-            return cachedPokemon.data;
+        console.log(`Fetching Pokemon data for: ${idOrName}`);
+        // Use fetchFromApi instead of direct fetch
+        const rawData = await fetchFromApi(`/pokemon/${cacheKey}`);
+
+        // The updated fetchFromApi returns null for 404s
+        if (!rawData) {
+            registerCustomPokemon(idOrName);
+            return null;
         }
-        console.error(`Failed to get Pokemon ${idOrName}: ${error.message}`);
+
+        const formatted = formatPokemonData(rawData);
+
+        // If this is a custom Pokemon by ID, register it
+        if (isCustomId(formatted.id)) {
+            registerCustomPokemon(formatted.name);
+        }
+
+        // Cache the result
+        pokemonCache.set(cacheKey, formatted);
+
+        return formatted;
+    } catch (error) {
+        console.warn(`Error fetching Pokemon ${idOrName}: ${error.message}`);
         return null;
     }
 };
 
 /**
- * Gets Pokemon image URL with caching
+ * Retrieves Pokemon images with fallbacks and caching
+ *
+ * This function handles image URL resolution with multiple layers of reliability:
+ * 1. Checks the image cache first
+ * 2. Uses question mark image for custom Pokemon
+ * 3. Tries official artwork first (higher quality)
+ * 4. Falls back to regular sprites if artwork isn't available
+ * 5. Uses Pokeball image as final fallback
  *
  * @param {string} name - Pokemon name
- * @returns {Promise<string>} - Image URL or default Pokeball
+ * @param {string|null} id - Pokemon ID if available
+ * @returns {Promise<string>} - URL to the Pokemon's image or fallback
  */
-export const getPokemonImage = async (name) => {
+export const getPokemonImage = async (name, id = null) => {
     if (!name) return POKE_BALL;
 
-    const cacheKey = name.toLowerCase().trim();
-    if (cacheKey === "") return POKE_BALL;
+    const cacheKey = String(name).toLowerCase().trim();
 
-    // Try cache first
-    const cachedImage = imageCache.get(cacheKey);
-    if (cachedImage && isCacheValid(cachedImage)) {
-        return cachedImage.url;
+    // Check cache first
+    if (imageCache.has(cacheKey)) {
+        return imageCache.get(cacheKey);
+    }
+
+    // If we have an ID and it's custom, use question mark immediately
+    if (id && isCustomId(id)) {
+        console.log(`${name} has custom ID ${id}, using question mark image`);
+        registerCustomPokemon(name);
+        imageCache.set(cacheKey, QUESTION_MARK);
+        return QUESTION_MARK;
+    }
+
+    // If this name is already known to be custom, use question mark
+    if (customPokemonNames.has(cacheKey)) {
+        console.log(
+            `${name} is a known custom Pokemon, using question mark image`
+        );
+        imageCache.set(cacheKey, QUESTION_MARK);
+        return QUESTION_MARK;
     }
 
     try {
-        // Fetch fresh image
-        const imageUrl = await fetchPokemonImage(name);
-        imageCache.set(cacheKey, {
-            url: imageUrl,
-            timestamp: Date.now(),
-        });
-        return imageUrl;
-    } catch (error) {
-        // Fall back to expired cache if available
-        if (cachedImage) {
-            console.warn(`Using expired cache for Pokemon image ${name}`);
-            return cachedImage.url;
+        // Try to get the Pokemon data to find its ID
+        const pokemonData = await getPokemon(name);
+
+        if (!pokemonData) {
+            // For unknown Pokemon
+            console.log(
+                `No data found for Pokemon: ${name}, using question mark`
+            );
+            imageCache.set(cacheKey, QUESTION_MARK);
+            return QUESTION_MARK;
         }
-        console.error(
-            `Failed to get image for Pokemon ${name}: ${error.message}`
+
+        // Try official artwork first (looks better)
+        const pokemonId = id || pokemonData.id;
+        const numId = parseInt(pokemonId);
+
+        if (isNaN(numId)) {
+            imageCache.set(cacheKey, QUESTION_MARK);
+            return QUESTION_MARK;
+        }
+
+        const officialArtworkUrl = `${SPRITE_URLS.officialArtwork}${numId}.png`;
+
+        try {
+            const response = await fetch(officialArtworkUrl, {
+                method: "HEAD",
+            });
+
+            if (response.ok) {
+                imageCache.set(cacheKey, officialArtworkUrl);
+                return officialArtworkUrl;
+            } else {
+                const regularSpriteUrl = `${SPRITE_URLS.default}${numId}.png`;
+                imageCache.set(cacheKey, regularSpriteUrl);
+                return regularSpriteUrl;
+            }
+        } catch (error) {
+            const regularSpriteUrl = `${SPRITE_URLS.default}${numId}.png`;
+            imageCache.set(cacheKey, regularSpriteUrl);
+            return regularSpriteUrl;
+        }
+    } catch (error) {
+        console.warn(
+            `Could not load image for Pokemon ${name}: ${error.message}`
         );
-        return POKE_BALL;
+        imageCache.set(cacheKey, QUESTION_MARK);
+        return QUESTION_MARK;
     }
 };
 
 /**
- * Gets paginated list of Pokemon
+ * Fetches a paginated list of Pokemon with caching
  *
- * @param {number} limit - Number of Pokemon to retrieve (default: 20)
- * @param {number} offset - Starting position (default: 0)
- * @returns {Promise<Array>} - List of Pokemon summaries with id, name and url
+ * Provides a way to browse Pokemon with efficient pagination,
+ * useful for exploration features and search functionality.
+ *
+ * @param {number} limit - Number of Pokemon to retrieve per page
+ * @param {number} offset - Starting position for pagination
+ * @returns {Promise<Array>} - List of basic Pokemon summaries with IDs and names
  */
 export const getPokemonList = async (limit = 20, offset = 0) => {
+    const cacheKey = `list-${limit}-${offset}`;
+
+    // Check cache first
+    if (pokemonCache.has(cacheKey)) {
+        return pokemonCache.get(cacheKey);
+    }
+
     try {
-        const response = await fetch(
-            `https://pokeapi.co/api/v2/pokemon?limit=${limit}&offset=${offset}`
+        // Use fetchFromApi instead of direct fetch
+        const data = await fetchFromApi(
+            `/pokemon?limit=${limit}&offset=${offset}`
         );
 
-        if (!response.ok) {
-            throw new Error(`Failed to fetch Pokemon list: ${response.status}`);
+        if (!data) {
+            return [];
         }
 
-        const data = await response.json();
-
-        // Extract IDs from URLs and format names
-        return data.results.map((pokemon) => {
+        const formatted = data.results.map((pokemon) => {
             const urlParts = pokemon.url.split("/");
             const id = urlParts[urlParts.length - 2];
-
             return {
-                id: id.padStart(3, "0"),
+                id: id.padStart(4, "0"),
                 name:
                     pokemon.name.charAt(0).toUpperCase() +
                     pokemon.name.slice(1),
                 url: pokemon.url,
             };
         });
+
+        // Cache the result
+        pokemonCache.set(cacheKey, formatted);
+
+        return formatted;
     } catch (error) {
-        console.error("Error fetching Pokemon list:", error);
-        throw error;
+        console.warn(`Error fetching Pokemon list: ${error.message}`);
+        return [];
     }
 };
 
 /**
- * Gets all available Pokemon types
+ * Fetches a list of Pokemon types with caching
  *
- * @returns {Promise<Array>} - List of Pokemon types
+ * Useful for filtering and categorization features that allow
+ * users to browse Pokemon by their types.
+ *
+ * @returns {Promise<Array>} - List of Pokemon types with formatted names
  */
 export const getPokemonTypes = async () => {
-    try {
-        const response = await fetch("https://pokeapi.co/api/v2/type");
+    const cacheKey = "types";
 
-        if (!response.ok) {
-            throw new Error(
-                `Failed to fetch Pokemon types: ${response.status}`
-            );
+    // Check cache first
+    if (pokemonCache.has(cacheKey)) {
+        return pokemonCache.get(cacheKey);
+    }
+
+    try {
+        // Use fetchFromApi instead of direct fetch
+        const data = await fetchFromApi(`/type`);
+
+        if (!data) {
+            return [];
         }
 
-        const data = await response.json();
-
-        // Filter out special types and format names
-        return data.results
+        const formatted = data.results
             .filter((type) => !["unknown", "shadow"].includes(type.name))
             .map((type) => ({
                 name: type.name.charAt(0).toUpperCase() + type.name.slice(1),
                 url: type.url,
             }));
+
+        // Cache the result
+        pokemonCache.set(cacheKey, formatted);
+
+        return formatted;
     } catch (error) {
-        console.error("Error fetching Pokemon types:", error);
-        throw error;
+        console.warn(`Error fetching Pokemon types: ${error.message}`);
+        return [];
     }
 };
 
 /**
- * Manually clears all caches to force fresh data fetching
+ * Clears all caches to force fresh data retrieval
+ *
+ * Useful for:
+ * - Testing
+ * - Handling version updates
+ * - Clearing memory when needed
  */
 export const clearCache = () => {
     pokemonCache.clear();
     imageCache.clear();
+    customPokemonNames.clear();
     console.log("Pokemon cache cleared");
 };
