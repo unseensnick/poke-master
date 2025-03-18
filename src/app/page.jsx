@@ -1,11 +1,28 @@
+import { HeroSection } from "@/components/hero-section";
+
 export default function HomePage() {
     return (
-        <div className="flex flex-col items-center justify-center flex-1">
-            {/* Home page content here */}
-            <h1 className="text-3xl font-bold">Welcome to PokéMaster</h1>
-            <p className="mt-4 text-muted-foreground">
-                Explore the world of Pokémon
-            </p>
-        </div>
+        <main>
+            {/* 
+        Animation presets available:
+        - "tight": Closely follows cursor with minimal lag
+        - "smooth": Balanced following with slight lag
+        - "floaty": Slow, drifting movement with significant lag
+        
+        Or provide custom settings with animationConfig:
+        animationConfig={{ damping: 15, stiffness: 250, mass: 0.3 }}
+        
+        Other customizable props:
+        - lightColor: CSS color class (e.g., "bg-indigo-500/20")
+        - lightSize: Size in pixels (e.g., 600)
+        - initialPosition: Starting position (e.g., { x: 0, y: 300 })
+      */}
+            <HeroSection
+                animationPreset="tight"
+                lightColor="bg-purple-500/20"
+                lightSize={500}
+            />
+            {/* Other page content */}
+        </main>
     );
 }

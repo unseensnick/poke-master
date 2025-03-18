@@ -38,7 +38,7 @@ export default function RootLayout({ children }) {
                             <SiteHeader />
                             <div className="flex flex-1 bg-background">
                                 <SidebarInset>
-                                    <main className="flex flex-1 flex-col p-4">
+                                    <main className="flex flex-1 flex-col">
                                         {children}
                                     </main>
                                 </SidebarInset>

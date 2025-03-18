@@ -85,7 +85,7 @@ export function ThemeToggle({ className, ...props }) {
     };
 
     // Responsive sizing
-    const size = isMobile ? "md" : "lg";
+    const size = isMobile ? "sm" : "md";
     const iconSize = isMobile ? "size-3" : "size-3.5";
 
     if (!mounted) return null;
