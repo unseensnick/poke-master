@@ -1,11 +1,10 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
-import * as React from "react";
-
-import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { Moon, Sun } from "lucide-react";
+import * as React from "react";
 
 const ThemeContext = React.createContext(null);
 
@@ -63,41 +62,58 @@ export function useTheme() {
 
 export function ThemeToggle({ className, ...props }) {
     const { theme, setTheme, isMobile } = useTheme();
+    const [mounted, setMounted] = React.useState(false);
 
-    const toggleTheme = () => {
-        setTheme(theme === "light" ? "dark" : "light");
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const resolvedTheme = React.useMemo(() => {
+        if (!mounted) return theme;
+
+        if (theme === "system") {
+            return window.matchMedia("(prefers-color-scheme: dark)").matches
+                ? "dark"
+                : "light";
+        }
+
+        return theme;
+    }, [theme, mounted]);
+
+    const handleToggle = (checked) => {
+        setTheme(checked ? "light" : "dark");
     };
 
+    // Responsive sizing
+    const size = isMobile ? "md" : "lg";
+    const iconSize = isMobile ? "size-3" : "size-3.5";
+
+    if (!mounted) return null;
+
     return (
-        <Button
-            variant={isMobile ? "outline" : "ghost"}
-            size="icon"
-            onClick={toggleTheme}
-            className={cn(
-                isMobile
-                    ? "size-8 rounded-full p-0 border-primary/30 bg-background/90"
-                    : "size-9 rounded-full p-0 hover:bg-primary/10 hover:text-foreground dark:hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-primary",
-                className
-            )}
+        <Switch
+            checked={resolvedTheme === "light"}
+            onCheckedChange={handleToggle}
+            size={size}
+            className={className}
             {...props}
         >
+            {/* Icons are inside a container div that's positioned behind the thumb */}
             <Sun
                 className={cn(
-                    "transition-transform",
-                    isMobile
-                        ? "size-4 rotate-0 scale-100 dark:-rotate-90 dark:scale-0 text-primary"
-                        : "size-5 rotate-0 scale-100 dark:-rotate-90 dark:scale-0 text-primary"
+                    "transition-colors",
+                    iconSize,
+                    resolvedTheme === "light" ? "text-white/90" : "text-primary"
                 )}
             />
+
             <Moon
                 className={cn(
-                    "absolute transition-transform",
-                    isMobile
-                        ? "size-4 rotate-90 scale-0 dark:rotate-0 dark:scale-100 text-primary"
-                        : "size-5 rotate-90 scale-0 dark:rotate-0 dark:scale-100 text-primary"
+                    "transition-colors",
+                    iconSize,
+                    resolvedTheme === "dark" ? "text-primary/90" : "text-white"
                 )}
             />
-            <span className="sr-only">Toggle theme</span>
-        </Button>
+        </Switch>
     );
 }

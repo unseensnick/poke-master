@@ -60,7 +60,9 @@ export function SiteHeader() {
                     </div>
 
                     <SearchForm className={isMobile ? "hidden sm:block" : ""} />
-                    <ThemeToggle />
+                    <div className="hidden md:block">
+                        <ThemeToggle />
+                    </div>
 
                     {/* Only show SidebarTrigger on screens < 768px (md) */}
                     <div className="md:hidden">

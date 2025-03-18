@@ -15,6 +15,7 @@ import {
     SidebarMenuItem,
     SidebarRail,
 } from "@/components/ui/sidebar";
+import { ThemeToggle } from "./theme-provider";
 
 const data = {
     navMain: [
@@ -55,8 +56,9 @@ export function AppSidebar({ ...props }) {
                     <SidebarGroup key={item.title}>
                         {/* Only show a label on mobile */}
                         <div className="md:hidden">
-                            <SidebarGroupLabel className="text-sidebar-foreground font-bold mb-2">
+                            <SidebarGroupLabel className="text-sidebar-foreground font-bold mb-2 justify-between ">
                                 {item.title}
+                                <ThemeToggle />
                             </SidebarGroupLabel>
                         </div>
 
