@@ -48,15 +48,24 @@ import { Skeleton } from "@/components/ui/skeleton";
  * @param {number} typeCount - Optional limit for how many types to use for styling (default: auto detect, max 3)
  * @returns {JSX.Element} The rendered Pokémon card with appropriate loading/error/data states
  */
-const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
-    // Component state variables
-    const [isHovered, setIsHovered] = useState(false); // Tracks if card is being hovered
-    const [pokemonData, setPokemonData] = useState(pokemon || null); // Stores Pokemon information
-    const [imageUrl, setImageUrl] = useState(null); // URL to Pokemon's image
-    const [isLoadingData, setIsLoadingData] = useState(!!pokemonIdOrName); // If we're fetching Pokemon data
-    const [isLoadingImage, setIsLoadingImage] = useState(true); // If we're loading the image
-    const [error, setError] = useState(false); // If data fetch encountered an error
-    const [isReady, setIsReady] = useState(!!pokemon); // If both data and image are ready
+const PokemonCard = ({
+    pokemon,
+    pokemonIdOrName,
+    typeCount = null,
+    customImage = null, // New prop with default value
+}) => {
+    // Component state variables (existing code)
+    const [isHovered, setIsHovered] = useState(false);
+    const [pokemonData, setPokemonData] = useState(pokemon || null);
+    const [imageUrl, setImageUrl] = useState(null);
+    const [isLoadingData, setIsLoadingData] = useState(!!pokemonIdOrName);
+    const [isLoadingImage, setIsLoadingImage] = useState(true);
+    const [error, setError] = useState(false);
+    const [isReady, setIsReady] = useState(!!pokemon);
+
+    // Add this after your cardKey useState:
+    // Ensure customImage is initialized
+    const [imageSource, setImageSource] = useState(customImage);
 
     /**
      * Unique identifier for tracking card transitions
@@ -66,9 +75,8 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
      * switching between different Pokémon.
      */
     const [cardKey, setCardKey] = useState(() => {
-        // Check if this is a custom Pokemon by ID first, before any API calls
         if (pokemon) {
-            initializePokemon(pokemon);
+            initializePokemon(pokemon, customImage);
         }
         return (
             pokemon?.id ||
@@ -86,7 +94,6 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
      * preventing unnecessary re-renders and API calls.
      */
     useEffect(() => {
-        // Generate a new key to force AnimatePresence to treat this as a new card
         const newKey =
             pokemon?.id ||
             pokemon?.name ||
@@ -94,7 +101,8 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
             Date.now().toString();
         setCardKey(newKey);
 
-        // Only reset data if we're changing to a different Pokemon
+        setImageSource(customImage);
+
         if (
             (pokemon?.id || pokemon?.name) !==
             (pokemonData?.id || pokemonData?.name)
@@ -105,7 +113,7 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
             setError(false);
             setImageUrl(null);
         }
-    }, [pokemon, pokemonIdOrName]);
+    }, [pokemon, pokemonIdOrName, customImage]);
 
     /**
      * Main data fetching effect - Loads Pokémon data
@@ -162,10 +170,19 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
             setIsLoadingImage(true);
 
             try {
-                const imageSource = await getPokemonImage(pokemonData.name);
-                setImageUrl(imageSource);
+                // If a custom image is provided, use it directly
+                if (imageSource) {
+                    setImageUrl(imageSource);
+                } else {
+                    // Otherwise use the regular image fetching logic
+                    const fetchedImage = await getPokemonImage(
+                        pokemonData.name,
+                        pokemonData.id
+                    );
+                    setImageUrl(fetchedImage);
+                }
             } catch (error) {
-                console.error("Error fetching Pokemon image:", error);
+                console.error("Error loading Pokemon image:", error);
                 setImageUrl(POKE_BALL); // Fallback to default image
             } finally {
                 setIsLoadingImage(false);
@@ -175,7 +192,7 @@ const PokemonCard = ({ pokemon, pokemonIdOrName, typeCount = null }) => {
         };
 
         loadPokemonImage();
-    }, [pokemonData]);
+    }, [pokemonData, imageSource]);
 
     /**
      * Animation configuration

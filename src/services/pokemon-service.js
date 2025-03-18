@@ -77,15 +77,24 @@ const registerCustomPokemon = (name) => {
  * accordingly to prevent unnecessary API calls.
  *
  * @param {Object} pokemonData - Direct Pokemon data object
+ * @param {string|null} customImage - Custom image URL if available
  * @returns {boolean} True if the Pokemon was registered as custom
  */
-export const initializePokemon = (pokemonData) => {
+export const initializePokemon = (pokemonData, customImage = null) => {
     if (!pokemonData || !pokemonData.name) return false;
 
     // Check if this Pokemon has a custom ID
     if (pokemonData.id && isCustomId(pokemonData.id)) {
         // Register the name to prevent future API calls
         registerCustomPokemon(pokemonData.name);
+
+        // If a custom image is provided, store it in the image cache
+        if (customImage) {
+            const cacheKey = String(pokemonData.name).toLowerCase().trim();
+            imageCache.set(cacheKey, customImage);
+            console.log(`Cached custom image for ${pokemonData.name}`);
+        }
+
         return true;
     }
 
@@ -155,20 +164,28 @@ export const getPokemon = async (idOrName) => {
 };
 
 /**
- * Retrieves Pokemon images with fallbacks and caching
+ * Retrieves Pokemon images with fallbacks, caching, and custom image support
  *
  * This function handles image URL resolution with multiple layers of reliability:
- * 1. Checks the image cache first
- * 2. Uses question mark image for custom Pokemon
- * 3. Tries official artwork first (higher quality)
- * 4. Falls back to regular sprites if artwork isn't available
- * 5. Uses Pokeball image as final fallback
+ * 1. Uses custom image if provided
+ * 2. Checks the image cache first
+ * 3. Uses question mark image for custom Pokemon
+ * 4. Tries official artwork first (higher quality)
+ * 5. Falls back to regular sprites if artwork isn't available
+ * 6. Uses Pokeball image as final fallback
  *
  * @param {string} name - Pokemon name
  * @param {string|null} id - Pokemon ID if available
+ * @param {string|null} customImage - Custom image URL if available
  * @returns {Promise<string>} - URL to the Pokemon's image or fallback
  */
-export const getPokemonImage = async (name, id = null) => {
+export const getPokemonImage = async (name, id = null, customImage = null) => {
+    // If custom image is provided, return it immediately
+    if (customImage) {
+        console.log(`Using custom image for ${name}`);
+        return customImage;
+    }
+
     if (!name) return POKE_BALL;
 
     const cacheKey = String(name).toLowerCase().trim();

@@ -37,7 +37,11 @@ export default function ExplorePage() {
                         <div className="text-center text-lg font-bold mb-4 text-muted-foreground">
                             Custom Pokémon (Triple-Type)
                         </div>
-                        <PokemonCard pokemon={elementrio} typeCount={3} />
+                        <PokemonCard
+                            pokemon={elementrio}
+                            customImage="/Elementrio.png"
+                            typeCount={3}
+                        />
                     </div>
                 </div>
             </div>
