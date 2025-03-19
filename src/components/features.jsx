@@ -24,7 +24,7 @@ export function FeaturesSection() {
             title: "Battle Simulator",
             description:
                 "Test your team's strength in simulated battles with customizable opponents and battle mechanics.",
-            image: "/pokemon-battle.svg",
+            image: "/pokemon-battle-v4.svg",
             altText: "Pokémon battle simulator illustration",
             link: "/battle",
             color: "var(--color-pokemon-fire)",
@@ -33,7 +33,7 @@ export function FeaturesSection() {
             title: "Team Builder",
             description:
                 "Create and customize your perfect Pokémon team with specific stats, moves, and held items.",
-            image: "/pokemon-team.svg",
+            image: "/pokemon-team-v2.svg",
             altText: "Pokémon team builder illustration",
             link: "/team",
             color: "var(--color-pokemon-water)",
