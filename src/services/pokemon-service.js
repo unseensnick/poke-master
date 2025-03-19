@@ -314,6 +314,116 @@ export const getPokemonList = async (limit = 20, offset = 0) => {
 };
 
 /**
+ * Fetches and caches featured Pokémon with a 24-hour expiration
+ *
+ * This function either returns cached featured Pokémon from localStorage
+ * or fetches and caches a new random selection if the cache is expired or doesn't exist.
+ *
+ * @param {number} count - Number of featured Pokémon to return
+ * @returns {Promise<Array>} - List of featured Pokémon
+ */
+export const getFeaturedPokemon = async (count = 4) => {
+    const cacheKey = "featured-pokemon";
+    const expirationKey = "featured-pokemon-expiration";
+
+    // Check if we're in a browser environment
+    const isBrowser = typeof window !== "undefined";
+    let cachedPokemon, expirationTime;
+
+    // Only try to access localStorage in browser environment
+    if (isBrowser) {
+        try {
+            cachedPokemon = localStorage.getItem(cacheKey);
+            expirationTime = localStorage.getItem(expirationKey);
+        } catch (e) {
+            console.warn("Error accessing localStorage:", e);
+        }
+    }
+
+    const now = Date.now();
+
+    // If we have valid cache that hasn't expired (24 hours = 86400000 ms)
+    if (cachedPokemon && expirationTime && now < parseInt(expirationTime)) {
+        console.log("Using cached featured Pokémon from localStorage");
+        // Also update in-memory cache for faster access
+        const parsedPokemon = JSON.parse(cachedPokemon);
+        pokemonCache.set(`${cacheKey}-memory`, parsedPokemon);
+        return parsedPokemon;
+    }
+
+    // Check if we have an in-memory cache as well (for SSR or localStorage access issues)
+    if (pokemonCache.has(`${cacheKey}-memory`)) {
+        console.log("Using in-memory cached featured Pokémon");
+        return pokemonCache.get(`${cacheKey}-memory`);
+    }
+
+    // Otherwise fetch new random featured Pokémon
+    try {
+        console.log("Fetching new featured Pokémon");
+        // Get a pool of Pokémon to choose from
+        const allPokemon = await getPokemonList(150, 0);
+
+        // Shuffle the array to get random Pokémon
+        const shuffled = [...allPokemon].sort(() => 0.5 - Math.random());
+
+        // Take only the requested number
+        const featuredPokemon = shuffled.slice(0, count);
+
+        // Store in both localStorage and in-memory cache
+        if (isBrowser) {
+            try {
+                localStorage.setItem(cacheKey, JSON.stringify(featuredPokemon));
+                localStorage.setItem(
+                    expirationKey,
+                    (now + 86400000).toString()
+                );
+            } catch (e) {
+                console.warn("Error writing to localStorage:", e);
+            }
+        }
+
+        // Always update in-memory cache
+        pokemonCache.set(`${cacheKey}-memory`, featuredPokemon);
+
+        return featuredPokemon;
+    } catch (error) {
+        console.error("Error fetching featured Pokémon:", error);
+
+        // If we have any cached data in localStorage, return it despite expiration
+        if (cachedPokemon) {
+            const parsedPokemon = JSON.parse(cachedPokemon);
+            pokemonCache.set(`${cacheKey}-memory`, parsedPokemon);
+            return parsedPokemon;
+        }
+
+        // Last resort fallback
+        const fallbackPokemon = [
+            { name: "Bulbasaur", id: "0001" },
+            { name: "Pikachu", id: "0025" },
+            { name: "Charizard", id: "0006" },
+            { name: "Lucario", id: "0448" },
+        ];
+
+        // Cache the fallback
+        if (isBrowser) {
+            try {
+                localStorage.setItem(cacheKey, JSON.stringify(fallbackPokemon));
+                localStorage.setItem(
+                    expirationKey,
+                    (now + 86400000).toString()
+                );
+            } catch (e) {
+                console.warn("Error writing fallback to localStorage:", e);
+            }
+        }
+
+        pokemonCache.set(`${cacheKey}-memory`, fallbackPokemon);
+
+        return fallbackPokemon;
+    }
+};
+
+/**
  * Fetches a list of Pokemon types with caching
  *
  * Useful for filtering and categorization features that allow

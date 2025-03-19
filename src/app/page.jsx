@@ -1,3 +1,4 @@
+import { FeaturedPokemon } from "@/components/featured-pokemon";
 import { HeroSection } from "@/components/hero-section";
 
 export default function HomePage() {
@@ -23,6 +24,7 @@ export default function HomePage() {
                 lightSize={500}
             />
             {/* Other page content */}
+            <FeaturedPokemon />
         </main>
     );
 }

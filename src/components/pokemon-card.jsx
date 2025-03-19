@@ -310,7 +310,7 @@ const PokemonCard = ({
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="will-change-transform"
+                    className="will-change-transform rounded-xl"
                 >
                     <Card
                         data-slot="card"
@@ -341,7 +341,7 @@ const PokemonCard = ({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.4 }}
-                    className="will-change-transform"
+                    className="will-change-transform rounded-xl"
                 >
                     <Card
                         data-slot="card"
@@ -380,7 +380,7 @@ const PokemonCard = ({
                     initial="exit"
                     animate="enter"
                     exit="exit"
-                    className="will-change-transform"
+                    className="will-change-transform rounded-xl"
                 >
                     <motion.div
                         initial="initial"
@@ -388,7 +388,7 @@ const PokemonCard = ({
                         variants={cardVariants}
                         onHoverStart={() => setIsHovered(true)}
                         onHoverEnd={() => setIsHovered(false)}
-                        className="will-change-transform perspective-1000"
+                        className="will-change-transform perspective-1000 rounded-xl"
                     >
                         <Card
                             data-slot="card"
