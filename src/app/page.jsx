@@ -1,4 +1,5 @@
 import { FeaturedPokemon } from "@/components/featured-pokemon";
+import { FeaturesSection } from "@/components/features";
 import { HeroSection } from "@/components/hero-section";
 
 export default function HomePage() {
@@ -25,6 +26,13 @@ export default function HomePage() {
             />
             {/* Other page content */}
             <FeaturedPokemon />
+            <FeaturesSection />
+            <footer className="py-10 text-center text-md text-muted-foreground">
+                <p>
+                    &copy; 2025 PokéMaster. All Pokémon and respective names are
+                    trademarks of Nintendo.
+                </p>
+            </footer>
         </main>
     );
 }

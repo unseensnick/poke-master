@@ -1,0 +1,110 @@
+import {
+    Card,
+    CardContent,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import { MoveRight } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+
+export function FeaturesSection() {
+    const features = [
+        {
+            title: "Explore Pokémon",
+            description:
+                "Discover, filter, and search through all Pokémon with detailed information, stats, and types.",
+            image: "/pokemon-explore.svg",
+            altText: "Pokémon exploration illustration",
+            link: "/explore",
+            color: "var(--color-pokemon-grass)",
+        },
+        {
+            title: "Battle Simulator",
+            description:
+                "Test your team's strength in simulated battles with customizable opponents and battle mechanics.",
+            image: "/pokemon-battle.svg",
+            altText: "Pokémon battle simulator illustration",
+            link: "/battle",
+            color: "var(--color-pokemon-fire)",
+        },
+        {
+            title: "Team Builder",
+            description:
+                "Create and customize your perfect Pokémon team with specific stats, moves, and held items.",
+            image: "/pokemon-team.svg",
+            altText: "Pokémon team builder illustration",
+            link: "/team",
+            color: "var(--color-pokemon-water)",
+        },
+    ];
+
+    return (
+        <section className="w-full py-16 px-4 md:py-24 bg-card/60">
+            <div className="max-w-7xl mx-auto">
+                {/* Heading */}
+                <div className="text-center mb-16">
+                    <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
+                        Features
+                    </h2>
+                    <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                        Everything you need to become a Pokémon Master.
+                    </p>
+                </div>
+
+                {/* Features Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    {features.map((feature, index) => (
+                        <Card
+                            key={index}
+                            className="rounded-xl overflow-hidden border border-border/40 hover:border-primary/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                        >
+                            <div className="h-48 relative bg-muted/30 overflow-hidden">
+                                {/* Feature image with themed background */}
+                                <div
+                                    className="absolute inset-0 flex items-center justify-center"
+                                    style={{
+                                        background: `linear-gradient(135deg, rgb(from ${feature.color} r g b / 0.2) 0%, rgb(from ${feature.color} r g b / 0.05) 100%)`,
+                                    }}
+                                >
+                                    <Image
+                                        src={feature.image}
+                                        width={160}
+                                        height={160}
+                                        alt={feature.altText}
+                                        className="object-contain size-auto max-h-40 p-4"
+                                    />
+                                </div>
+                            </div>
+
+                            <CardHeader className="pt-6">
+                                <CardTitle className="text-2xl font-bold text-foreground">
+                                    {feature.title}
+                                </CardTitle>
+                            </CardHeader>
+
+                            <CardContent>
+                                <p className="text-muted-foreground">
+                                    {feature.description}
+                                </p>
+                            </CardContent>
+
+                            <CardFooter className="pt-2 pb-6">
+                                <Link
+                                    href={feature.link}
+                                    className="flex items-center text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                                >
+                                    Learn more
+                                    <MoveRight className="ml-1 size-4" />
+                                </Link>
+                            </CardFooter>
+                        </Card>
+                    ))}
+                </div>
+            </div>
+        </section>
+    );
+}
+
+export default FeaturesSection;
