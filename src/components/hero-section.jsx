@@ -107,6 +107,17 @@ export function HeroSection({
         }
     };
 
+    // Function to scroll to features section
+    const scrollToFeatures = () => {
+        const featuresSection = document.getElementById("features-section");
+        if (featuresSection) {
+            featuresSection.scrollIntoView({
+                behavior: "smooth",
+                block: "start",
+            });
+        }
+    };
+
     // Set up event cleanup for mouse events
     useEffect(() => {
         // Keep reference to current container for cleanup
@@ -170,9 +181,13 @@ export function HeroSection({
                             <Link href="/explore">Start Exploring</Link>
                         </Button>
 
-                        {/* Secondary action button */}
-                        <Button variant="pokemonOutline" size="lg" asChild>
-                            <Link href="/features">View Features</Link>
+                        {/* Secondary action button - now with onClick scrolling */}
+                        <Button
+                            variant="pokemonOutline"
+                            size="lg"
+                            onClick={scrollToFeatures}
+                        >
+                            View Features
                         </Button>
                     </div>
                 </div>

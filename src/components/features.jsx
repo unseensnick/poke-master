@@ -46,7 +46,10 @@ export function FeaturesSection() {
     ];
 
     return (
-        <section className="w-full py-16 px-4 md:py-24 bg-card/60">
+        <section
+            id="features-section"
+            className="w-full py-16 px-4 md:py-24 bg-card/60"
+        >
             <div className="max-w-7xl mx-auto">
                 {/* Heading */}
                 <div className="text-center mb-16">
