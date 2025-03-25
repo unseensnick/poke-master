@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Pokemon {
+  id             Int      @id
+  name           String   @unique
+  weight         Float
+  height         Float
+  types          String[] // Array of type names
+  stats          Json? // Stores HP, attack, defense, etc.
+  abilities      String[] // Array of ability names
+  sprites        Json? // Contains URLs for different sprite versions
+  generationId   Int? // Added for efficient filtering
+  baseExperience Int?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([name])
+  @@index([generationId])
+  @@index([types]) // Index for type filtering
+}
+
+model PokemonType {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+}
+
+model Generation {
+  id    Int      @id
+  name  String
+  games String[]
+  range Int[] // Stores [min, max] Pokémon IDs for this generation
+}

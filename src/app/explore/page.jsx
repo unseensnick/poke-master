@@ -4,8 +4,7 @@ import PokemonCard from "@/components/pokemon-card";
 import { PokemonFilters } from "@/components/pokemon-filters";
 import { PokemonSort } from "@/components/pokemon-sort";
 import { Button } from "@/components/ui/button";
-import { GAMES, GENERATIONS } from "@/lib/pokemon-constants"; // Import shared constants
-import { getPokemon, getPokemonList } from "@/services/pokemon-service";
+import { getExplorePageData } from "@/services/pokemon-service";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -17,6 +16,7 @@ export default function ExplorePage() {
 
     // State for Pokemon data and pagination
     const [pokemonList, setPokemonList] = useState([]);
+    const [pokemonTypes, setPokemonTypes] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
     const [offset, setOffset] = useState(0);
@@ -33,134 +33,51 @@ export default function ExplorePage() {
 
     const ITEMS_PER_PAGE = 20;
 
-    // Function to sort Pokemon list based on the selected sort order
-    const sortPokemonList = (list, order) => {
-        return [...list].sort((a, b) => {
-            switch (order) {
-                case "id-asc":
-                    // Convert string IDs to numbers for proper numeric sorting
-                    return (
-                        parseInt(a.id.replace(/\D/g, "")) -
-                        parseInt(b.id.replace(/\D/g, ""))
-                    );
-                case "id-desc":
-                    return (
-                        parseInt(b.id.replace(/\D/g, "")) -
-                        parseInt(a.id.replace(/\D/g, ""))
-                    );
-                case "name-asc":
-                    return a.name.localeCompare(b.name);
-                case "name-desc":
-                    return b.name.localeCompare(a.name);
-                default:
-                    return 0;
-            }
-        });
-    };
-
-    // Enhanced Pokemon filtering function
-    const applyFilters = async (pokemonList) => {
-        // If no filters are active, return the original list
-        if (
-            selectedTypes.length === 0 &&
-            !selectedGeneration &&
-            !selectedGame
-        ) {
-            return pokemonList;
-        }
-
-        // Filter by generation if selected
-        let filteredList = pokemonList;
-
-        if (selectedGeneration) {
-            // Find the generation's range
-            const generation = GENERATIONS.find(
-                (gen) => gen.id === selectedGeneration
-            );
-            if (generation) {
-                const [minId, maxId] = generation.range;
-                filteredList = filteredList.filter((pokemon) => {
-                    // Extract numeric ID (ignoring padding)
-                    const id = parseInt(pokemon.id.replace(/\D/g, ""));
-                    return id >= minId && id <= maxId;
-                });
-            }
-        }
-
-        // Filter by game if selected (using matching generation as a proxy)
-        if (selectedGame) {
-            const game = GAMES.find((g) => g.id === selectedGame);
-            if (game) {
-                // Find the generation range for this game
-                const gameGeneration = GENERATIONS.find(
-                    (gen) => gen.id === game.generation
-                );
-                if (gameGeneration) {
-                    const [minId, maxId] = gameGeneration.range;
-                    filteredList = filteredList.filter((pokemon) => {
-                        const id = parseInt(pokemon.id.replace(/\D/g, ""));
-                        return id >= minId && id <= maxId;
-                    });
-                }
-            }
-        }
-
-        // Filter by type if selected
-        if (selectedTypes.length > 0) {
-            // For type filtering, we need to fetch the full Pokemon data
-            // This can be expensive for large lists, so we'll do it in batches
-            const MAX_CONCURRENT = 10; // Maximum concurrent API requests
-            const filteredByType = [];
-
-            // Process in batches to avoid overwhelming the API
-            for (let i = 0; i < filteredList.length; i += MAX_CONCURRENT) {
-                const batch = filteredList.slice(i, i + MAX_CONCURRENT);
-
-                // Fetch full Pokemon data for this batch
-                const promises = batch.map((pokemon) =>
-                    getPokemon(pokemon.name).catch(() => null)
-                );
-
-                const fullPokemonData = await Promise.all(promises);
-
-                // Filter Pokemon that match all selected types
-                for (let j = 0; j < fullPokemonData.length; j++) {
-                    const pokemon = fullPokemonData[j];
-                    if (!pokemon) continue;
-
-                    // Check if this Pokemon has all the selected types
-                    const pokemonTypes = pokemon.types.map((type) =>
-                        type.toLowerCase()
-                    );
-                    const matchesAllTypes = selectedTypes.every((type) =>
-                        pokemonTypes.includes(type.toLowerCase())
-                    );
-
-                    if (matchesAllTypes) {
-                        filteredByType.push(batch[j]);
-                    }
-                }
-
-                // Add a small delay to be nice to the API
-                if (i + MAX_CONCURRENT < filteredList.length) {
-                    await new Promise((resolve) => setTimeout(resolve, 100));
-                }
-            }
-
-            filteredList = filteredByType;
-        }
-
-        return filteredList;
-    };
-
-    // Reset and reload when filters or search query changes
+    // Load initial data with a single request
     useEffect(() => {
-        setPokemonList([]);
-        setOffset(0);
-        setHasMore(true);
-        setInitialLoading(true);
+        async function loadInitialData() {
+            setIsLoading(true);
+            setInitialLoading(true);
+            setPokemonList([]); // Clear previous results
 
-        loadPokemon(0);
+            try {
+                // Make a single request for complete Pokemon data and types
+                const data = await getExplorePageData({
+                    limit: ITEMS_PER_PAGE,
+                    offset: 0,
+                    types: selectedTypes,
+                    generation: selectedGeneration,
+                    game: selectedGame,
+                    searchQuery: searchQuery,
+                    sortOrder: sortOrder,
+                    includeTypes: true, // Also fetch types data
+                    includeFullData: true, // Get complete Pokemon data with sprites
+                });
+
+                // Update state with the data from the single response
+                setPokemonList(data.pokemonList || []);
+                setPokemonTypes(data.pokemonTypes || []);
+
+                // Update pagination state
+                if (
+                    !data.pokemonList ||
+                    data.pokemonList.length < ITEMS_PER_PAGE
+                ) {
+                    setHasMore(false);
+                } else {
+                    setOffset(ITEMS_PER_PAGE);
+                    setHasMore(true);
+                }
+            } catch (error) {
+                console.error("Error loading initial data:", error);
+                setHasMore(false);
+            } finally {
+                setIsLoading(false);
+                setInitialLoading(false);
+            }
+        }
+
+        loadInitialData();
     }, [
         selectedTypes,
         selectedGeneration,
@@ -169,145 +86,56 @@ export default function ExplorePage() {
         searchQuery,
     ]);
 
-    // Load Pokemon data function with enhanced filtering
-    const loadPokemon = async (currentOffset) => {
-        if (isLoading) return;
+    // Load more Pokemon when scrolling (pagination)
+    const loadMorePokemon = useCallback(async () => {
+        if (isLoading || !hasMore) return;
 
         setIsLoading(true);
+
         try {
-            let newPokemon = [];
+            // Only need to fetch more Pokemon list items, not types
+            const data = await getExplorePageData({
+                limit: ITEMS_PER_PAGE,
+                offset: offset,
+                types: selectedTypes,
+                generation: selectedGeneration,
+                game: selectedGame,
+                searchQuery: searchQuery,
+                sortOrder: sortOrder,
+                includeTypes: false, // Don't need types for pagination
+                includeFullData: true, // Still need complete data with sprites
+            });
 
-            // Handle search query if present
-            if (searchQuery) {
-                try {
-                    const searchLower = searchQuery.toLowerCase();
+            const newPokemon = data.pokemonList || [];
 
-                    // Only try exact match if search term is at least 3 characters
-                    if (searchLower.length >= 3) {
-                        try {
-                            // Try to get the specific Pokemon, but suppress 404 errors
-                            const exactMatch = await getPokemon(
-                                searchLower,
-                                true
-                            );
-                            if (exactMatch) {
-                                newPokemon.push({
-                                    id: exactMatch.id,
-                                    name: exactMatch.name,
-                                });
-                            }
-                        } catch (e) {
-                            // No exact match, that's fine - continue with partial matching
-                        }
-                    }
-
-                    // Then look for partial matches
-                    const pokemonList = await getPokemonList(100, 0);
-
-                    // Filter for Pokemon whose names contain the search string
-                    const matchingPokemon = pokemonList.filter((pokemon) =>
-                        pokemon.name.toLowerCase().includes(searchLower)
-                    );
-
-                    // If we found partial matches and don't have an exact match already
-                    if (matchingPokemon.length > 0 && newPokemon.length === 0) {
-                        newPokemon = [...matchingPokemon];
-                    }
-
-                    // If we still have no results and the search is numeric, try by ID
-                    if (
-                        newPokemon.length === 0 &&
-                        !isNaN(searchLower) &&
-                        searchLower.length <= 4
-                    ) {
-                        try {
-                            const pokemonById = await getPokemon(
-                                parseInt(searchLower)
-                            );
-                            if (pokemonById) {
-                                newPokemon.push({
-                                    id: pokemonById.id,
-                                    name: pokemonById.name,
-                                });
-                            }
-                        } catch (e) {
-                            // No results by ID either, that's fine
-                        }
-                    }
-                } catch (e) {
-                    // If all search attempts fail, show no results
-                    console.log("Search failed completely:", e);
-                    newPokemon = [];
-                }
-            } else {
-                // Normal list loading without search
-                newPokemon = await getPokemonList(
-                    ITEMS_PER_PAGE,
-                    currentOffset
-                );
-            }
-
-            // Apply filters to the Pokemon list
-            let filteredPokemon = newPokemon;
-
-            // Only apply filters if we have Pokemon and filters are selected
-            if (
-                newPokemon.length > 0 &&
-                (selectedTypes.length > 0 || selectedGeneration || selectedGame)
-            ) {
-                filteredPokemon = await applyFilters(newPokemon);
-            }
-
-            if (filteredPokemon.length === 0) {
+            if (newPokemon.length === 0) {
                 setHasMore(false);
             } else {
-                // Apply sorting to the filtered Pokemon list
-                const sortedPokemon = sortPokemonList(
-                    filteredPokemon,
-                    sortOrder
-                );
+                setPokemonList((prev) => [...prev, ...newPokemon]);
 
-                // Update the state with sorted and filtered Pokemon
-                setPokemonList((prev) => {
-                    // For first load or search reset, just use the sorted new pokemon
-                    if (currentOffset === 0) {
-                        return sortedPokemon;
-                    }
-                    // For pagination, combine with previous and sort the whole list
-                    else {
-                        return sortPokemonList(
-                            [...prev, ...sortedPokemon],
-                            sortOrder
-                        );
-                    }
-                });
-
-                // Only increment offset for pagination if we're not searching and have enough results
-                if (
-                    !searchQuery &&
-                    filteredPokemon.length >= ITEMS_PER_PAGE / 2
-                ) {
-                    setOffset(currentOffset + ITEMS_PER_PAGE);
-                } else {
-                    // When searching or filtering returns few results, we don't want pagination
+                // If we got fewer results than requested, we've reached the end
+                if (newPokemon.length < ITEMS_PER_PAGE) {
                     setHasMore(false);
+                } else {
+                    setOffset(offset + ITEMS_PER_PAGE);
                 }
             }
         } catch (error) {
-            console.error("Error loading Pokémon:", error);
+            console.error("Error loading more Pokémon:", error);
+            setHasMore(false);
         } finally {
             setIsLoading(false);
-            setInitialLoading(false);
         }
-    };
-
-    // Load more Pokemon when scrolling
-    const loadMorePokemon = useCallback(() => {
-        // We'll allow infinite scrolling to work regardless of filters now
-        if (!isLoading && hasMore && !searchQuery) {
-            loadPokemon(offset);
-        }
-    }, [isLoading, hasMore, offset, searchQuery]);
+    }, [
+        isLoading,
+        hasMore,
+        offset,
+        selectedTypes,
+        selectedGeneration,
+        selectedGame,
+        searchQuery,
+        sortOrder,
+    ]);
 
     // Setup Intersection Observer for infinite scrolling
     useEffect(() => {
@@ -353,7 +181,7 @@ export default function ExplorePage() {
         // We don't reset sort order when clearing filters
     };
 
-    // Animation variants
+    // Animation variants - unchanged
     const containerVariants = {
         hidden: { opacity: 0 },
         show: {
@@ -403,6 +231,7 @@ export default function ExplorePage() {
                     selectedTypes={selectedTypes}
                     selectedGeneration={selectedGeneration}
                     selectedGame={selectedGame}
+                    availableTypes={pokemonTypes} // Pass types from consolidated request
                     className="flex-1"
                 />
 
@@ -471,7 +300,7 @@ export default function ExplorePage() {
                                     className="w-full flex justify-center"
                                 >
                                     <PokemonCard
-                                        pokemonIdOrName={pokemon.name}
+                                        preloadedData={pokemon} // Pass complete preloaded data including sprite URL
                                     />
                                 </motion.div>
                             ))}
@@ -499,9 +328,7 @@ export default function ExplorePage() {
                     )}
 
                     {/* Infinite scroll trigger */}
-                    {hasMore && !searchQuery && (
-                        <div ref={loaderRef} className="h-20" />
-                    )}
+                    {hasMore && <div ref={loaderRef} className="h-20" />}
 
                     {/* End of results message */}
                     {!hasMore && pokemonList.length > 0 && (

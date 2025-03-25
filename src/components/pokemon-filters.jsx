@@ -27,69 +27,70 @@ export function PokemonFilters({
     selectedGeneration = null,
     selectedGame = null,
     className = "",
+    availableTypes = [], // For pre-loaded types
 }) {
-    // Local state for all filters
-    const [types, setTypes] = useState([]);
-    const [localSelectedTypes, setLocalSelectedTypes] = useState(selectedTypes);
-    const [localSelectedGeneration, setLocalSelectedGeneration] =
-        useState(selectedGeneration);
-    const [localSelectedGame, setLocalSelectedGame] = useState(selectedGame);
+    // Local state for UI elements, NOT mirroring the props
     const [isOpen, setIsOpen] = useState(false);
     const [activeAccordion, setActiveAccordion] = useState(["types"]);
+    const [isLoadingTypes, setIsLoadingTypes] = useState(
+        availableTypes.length === 0
+    );
+    const [types, setTypes] = useState(availableTypes);
 
-    // Fetch Pokémon types on component mount
+    // IMPORTANT: We don't duplicate the filter state locally anymore
+    // This breaks the infinite update loop
+
+    // Fetch types if not provided
     useEffect(() => {
+        if (availableTypes && availableTypes.length > 0) {
+            setTypes(availableTypes);
+            setIsLoadingTypes(false);
+            return;
+        }
+
         const loadTypes = async () => {
+            setIsLoadingTypes(true);
             try {
                 const fetchedTypes = await getPokemonTypes();
                 setTypes(fetchedTypes);
             } catch (error) {
                 console.error("Error loading Pokémon types:", error);
                 setTypes([]);
+            } finally {
+                setIsLoadingTypes(false);
             }
         };
 
         loadTypes();
-    }, []);
+    }, [availableTypes]);
 
-    // Update parent component when filters change
-    useEffect(() => {
-        onFilterChange?.({
-            types: localSelectedTypes,
-            generation: localSelectedGeneration,
-            game: localSelectedGame,
-        });
-    }, [
-        localSelectedTypes,
-        localSelectedGeneration,
-        localSelectedGame,
-        onFilterChange,
-    ]);
-
-    // Handle type selection
+    // Handle type selection - directly call the parent's callback
     const toggleType = (type) => {
-        setLocalSelectedTypes((prev) => {
-            if (prev.includes(type)) {
-                return prev.filter((t) => t !== type);
-            } else {
-                return [...prev, type];
-            }
+        const newTypes = selectedTypes.includes(type)
+            ? selectedTypes.filter((t) => t !== type)
+            : [...selectedTypes, type];
+
+        onFilterChange?.({
+            types: newTypes,
+            generation: selectedGeneration,
+            game: selectedGame,
         });
     };
 
-    // Clear all filters
+    // Clear all filters - directly call the parent's callback
     const clearFilters = () => {
-        setLocalSelectedTypes([]);
-        setLocalSelectedGeneration(null);
-        setLocalSelectedGame(null);
-        // We don't reset sort order when clearing filters
+        onFilterChange?.({
+            types: [],
+            generation: null,
+            game: null,
+        });
     };
 
     // Count active filters
     const activeFilterCount =
-        localSelectedTypes.length +
-        (localSelectedGeneration ? 1 : 0) +
-        (localSelectedGame ? 1 : 0);
+        selectedTypes.length +
+        (selectedGeneration ? 1 : 0) +
+        (selectedGame ? 1 : 0);
 
     return (
         <div className={`w-full ${className}`}>
@@ -150,52 +151,60 @@ export function PokemonFilters({
                                     <AccordionTrigger>
                                         <div className="flex items-center">
                                             <span>Types</span>
-                                            {localSelectedTypes.length > 0 && (
+                                            {selectedTypes.length > 0 && (
                                                 <Badge
                                                     variant="primary"
                                                     className="ml-2"
                                                 >
-                                                    {localSelectedTypes.length}
+                                                    {selectedTypes.length}
                                                 </Badge>
                                             )}
                                         </div>
                                     </AccordionTrigger>
                                     <AccordionContent>
-                                        <div className="flex flex-wrap gap-2 mt-2">
-                                            {types.map((type) => (
-                                                <Badge
-                                                    key={type.name}
-                                                    variant={
-                                                        localSelectedTypes.includes(
+                                        {isLoadingTypes ? (
+                                            <div className="flex justify-center py-4">
+                                                <div className="h-6 w-6 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-wrap gap-2 mt-2">
+                                                {types.map((type) => (
+                                                    <Badge
+                                                        key={type.name}
+                                                        variant={
+                                                            selectedTypes.includes(
+                                                                type.name
+                                                            )
+                                                                ? "default"
+                                                                : "outline"
+                                                        }
+                                                        className={`cursor-pointer capitalize ${
+                                                            selectedTypes.includes(
+                                                                type.name
+                                                            )
+                                                                ? "bg-pokemon-" +
+                                                                  type.name.toLowerCase() +
+                                                                  " hover:bg-pokemon-" +
+                                                                  type.name.toLowerCase() +
+                                                                  "/90"
+                                                                : "hover:bg-muted"
+                                                        }`}
+                                                        onClick={() =>
+                                                            toggleType(
+                                                                type.name
+                                                            )
+                                                        }
+                                                    >
+                                                        {selectedTypes.includes(
                                                             type.name
-                                                        )
-                                                            ? "default"
-                                                            : "outline"
-                                                    }
-                                                    className={`cursor-pointer capitalize ${
-                                                        localSelectedTypes.includes(
-                                                            type.name
-                                                        )
-                                                            ? "bg-pokemon-" +
-                                                              type.name.toLowerCase() +
-                                                              " hover:bg-pokemon-" +
-                                                              type.name.toLowerCase() +
-                                                              "/90"
-                                                            : "hover:bg-muted"
-                                                    }`}
-                                                    onClick={() =>
-                                                        toggleType(type.name)
-                                                    }
-                                                >
-                                                    {localSelectedTypes.includes(
-                                                        type.name
-                                                    ) && (
-                                                        <Check className="h-3 w-3 mr-1" />
-                                                    )}
-                                                    {type.name}
-                                                </Badge>
-                                            ))}
-                                        </div>
+                                                        ) && (
+                                                            <Check className="h-3 w-3 mr-1" />
+                                                        )}
+                                                        {type.name}
+                                                    </Badge>
+                                                ))}
+                                            </div>
+                                        )}
                                     </AccordionContent>
                                 </AccordionItem>
 
@@ -204,7 +213,7 @@ export function PokemonFilters({
                                     <AccordionTrigger>
                                         <div className="flex items-center">
                                             <span>Generation</span>
-                                            {localSelectedGeneration && (
+                                            {selectedGeneration && (
                                                 <Badge
                                                     variant="primary"
                                                     className="ml-2"
@@ -220,22 +229,28 @@ export function PokemonFilters({
                                                 <Badge
                                                     key={gen.id}
                                                     variant={
-                                                        localSelectedGeneration ===
+                                                        selectedGeneration ===
                                                         gen.id
                                                             ? "default"
                                                             : "outline"
                                                     }
                                                     className="cursor-pointer"
-                                                    onClick={() =>
-                                                        setLocalSelectedGeneration(
-                                                            localSelectedGeneration ===
-                                                                gen.id
+                                                    onClick={() => {
+                                                        const newGeneration =
+                                                            selectedGeneration ===
+                                                            gen.id
                                                                 ? null
-                                                                : gen.id
-                                                        )
-                                                    }
+                                                                : gen.id;
+
+                                                        onFilterChange?.({
+                                                            types: selectedTypes,
+                                                            generation:
+                                                                newGeneration,
+                                                            game: selectedGame,
+                                                        });
+                                                    }}
                                                 >
-                                                    {localSelectedGeneration ===
+                                                    {selectedGeneration ===
                                                         gen.id && (
                                                         <Check className="h-3 w-3 mr-1" />
                                                     )}
@@ -251,7 +266,7 @@ export function PokemonFilters({
                                     <AccordionTrigger>
                                         <div className="flex items-center">
                                             <span>Games</span>
-                                            {localSelectedGame && (
+                                            {selectedGame && (
                                                 <Badge
                                                     variant="primary"
                                                     className="ml-2"
@@ -263,14 +278,20 @@ export function PokemonFilters({
                                     </AccordionTrigger>
                                     <AccordionContent>
                                         <Select
-                                            value={localSelectedGame || "all"}
-                                            onValueChange={(value) =>
-                                                setLocalSelectedGame(
+                                            value={selectedGame || "all"}
+                                            onValueChange={(value) => {
+                                                const newGame =
                                                     value === "all"
                                                         ? null
-                                                        : value
-                                                )
-                                            }
+                                                        : value;
+
+                                                onFilterChange?.({
+                                                    types: selectedTypes,
+                                                    generation:
+                                                        selectedGeneration,
+                                                    game: newGame,
+                                                });
+                                            }}
                                         >
                                             <SelectTrigger className="w-full">
                                                 <SelectValue placeholder="Select a game" />

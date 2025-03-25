@@ -33,35 +33,36 @@ import { Skeleton } from "@/components/ui/skeleton";
 /**
  * PokemonCard - Interactive, visually rich card component for displaying Pokémon
  *
- * Renders a Pokémon with dynamic styling based on its type(s), featuring smooth animations,
- * loading states, and interactive hover effects. The card adapts its appearance based
- * on the Pokémon's primary, secondary, and (if applicable) tertiary types.
- *
- * Core features:
- * - Dynamic data fetching from API or direct data input
- * - Type-based theming with gradients and accents
- * - Animated transitions between loading, error, and data states
- * - Interactive hover effects with coordinated animations
- *
- * @param {Object} pokemon - Optional pre-loaded Pokémon data (if provided, API fetch is skipped)
+ * @param {Object} pokemon - Optional pre-loaded Pokémon data
  * @param {string|number} pokemonIdOrName - Pokémon ID or name to fetch (only used if pokemon object isn't provided)
- * @param {number} typeCount - Optional limit for how many types to use for styling (default: auto detect, max 3)
- * @returns {JSX.Element} The rendered Pokémon card with appropriate loading/error/data states
+ * @param {number} typeCount - Optional limit for how many types to use for styling
+ * @param {string} customImage - Optional custom image URL to use instead of fetching
+ * @param {Object} preloadedData - Optional complete preloaded data including sprite URLs (preferred approach)
+ * @returns {JSX.Element} The rendered Pokémon card
  */
 const PokemonCard = ({
     pokemon,
     pokemonIdOrName,
     typeCount = null,
-    customImage = null, // New prop with default value
+    customImage = null,
+    preloadedData = null, // New prop for pre-loaded data
 }) => {
-    // Component state variables (existing code)
+    // Component state variables
     const [isHovered, setIsHovered] = useState(false);
-    const [pokemonData, setPokemonData] = useState(pokemon || null);
-    const [imageUrl, setImageUrl] = useState(null);
-    const [isLoadingData, setIsLoadingData] = useState(!!pokemonIdOrName);
-    const [isLoadingImage, setIsLoadingImage] = useState(true);
+    const [pokemonData, setPokemonData] = useState(
+        pokemon || preloadedData || null
+    );
+    const [imageUrl, setImageUrl] = useState(
+        preloadedData?.spriteUrl || customImage || null
+    );
+    const [isLoadingData, setIsLoadingData] = useState(
+        !preloadedData && !pokemon && !!pokemonIdOrName
+    );
+    const [isLoadingImage, setIsLoadingImage] = useState(
+        !preloadedData?.spriteUrl && !customImage
+    );
     const [error, setError] = useState(false);
-    const [isReady, setIsReady] = useState(!!pokemon);
+    const [isReady, setIsReady] = useState(!!pokemon || !!preloadedData);
 
     // Add this after your cardKey useState:
     // Ensure customImage is initialized
@@ -69,16 +70,13 @@ const PokemonCard = ({
 
     /**
      * Unique identifier for tracking card transitions
-     *
-     * Used by Framer Motion's AnimatePresence to properly track and animate cards
-     * when they're added or removed from the DOM, ensuring smooth transitions when
-     * switching between different Pokémon.
      */
     const [cardKey, setCardKey] = useState(() => {
         if (pokemon) {
             initializePokemon(pokemon, customImage);
         }
         return (
+            preloadedData?.id ||
             pokemon?.id ||
             pokemon?.name ||
             pokemonIdOrName ||
@@ -88,13 +86,10 @@ const PokemonCard = ({
 
     /**
      * Updates card when the Pokémon changes
-     *
-     * Handles generating a new key for animations and resetting state values.
-     * Only performs a full reset when actually switching to a different Pokémon,
-     * preventing unnecessary re-renders and API calls.
      */
     useEffect(() => {
         const newKey =
+            preloadedData?.id ||
             pokemon?.id ||
             pokemon?.name ||
             pokemonIdOrName ||
@@ -104,28 +99,32 @@ const PokemonCard = ({
         setImageSource(customImage);
 
         if (
-            (pokemon?.id || pokemon?.name) !==
-            (pokemonData?.id || pokemonData?.name)
+            (pokemon?.id ||
+                pokemon?.name ||
+                preloadedData?.id ||
+                preloadedData?.name) !== (pokemonData?.id || pokemonData?.name)
         ) {
-            setIsReady(!!pokemon);
-            setPokemonData(pokemon || null);
-            setIsLoadingData(!!pokemonIdOrName);
+            setIsReady(!!pokemon || !!preloadedData);
+            setPokemonData(pokemon || preloadedData || null);
+            setIsLoadingData(!preloadedData && !pokemon && !!pokemonIdOrName);
             setError(false);
-            setImageUrl(null);
+            setImageUrl(preloadedData?.spriteUrl || customImage || null);
+            setIsLoadingImage(!preloadedData?.spriteUrl && !customImage);
         }
-    }, [pokemon, pokemonIdOrName, customImage]);
+    }, [pokemon, pokemonIdOrName, customImage, preloadedData]);
 
     /**
      * Main data fetching effect - Loads Pokémon data
-     *
-     * Either uses direct data from props or fetches from API.
-     * Manages loading states and handles errors gracefully.
+     * Skip if preloadedData is provided
      */
     useEffect(() => {
-        if (pokemon) {
-            setPokemonData(pokemon);
+        if (pokemon || preloadedData) {
+            setPokemonData(pokemon || preloadedData);
             setIsLoadingData(false);
-            setIsReady(true); // Mark as ready immediately for direct data
+            // Only set ready if we also have image (for preloadedData) or after image loads (for pokemon)
+            if (preloadedData?.spriteUrl || customImage) {
+                setIsReady(true);
+            }
             return;
         }
 
@@ -151,14 +150,11 @@ const PokemonCard = ({
         };
 
         loadPokemonData();
-    }, [pokemon, pokemonIdOrName]);
+    }, [pokemon, pokemonIdOrName, preloadedData, customImage]);
 
     /**
      * Secondary fetch effect - Loads Pokémon image
-     *
-     * Separated from main data fetch to allow independent loading states.
-     * This separation allows showing a spinner during image load while
-     * already displaying other Pokémon details.
+     * Skip if preloadedData.spriteUrl is provided
      */
     useEffect(() => {
         if (!pokemonData) {
@@ -166,21 +162,24 @@ const PokemonCard = ({
             return;
         }
 
+        // If we have a preloaded sprite URL or custom image, use it directly
+        if (preloadedData?.spriteUrl || customImage) {
+            setImageUrl(preloadedData?.spriteUrl || customImage);
+            setIsLoadingImage(false);
+            setIsReady(true);
+            return;
+        }
+
         const loadPokemonImage = async () => {
             setIsLoadingImage(true);
 
             try {
-                // If a custom image is provided, use it directly
-                if (imageSource) {
-                    setImageUrl(imageSource);
-                } else {
-                    // Otherwise use the regular image fetching logic
-                    const fetchedImage = await getPokemonImage(
-                        pokemonData.name,
-                        pokemonData.id
-                    );
-                    setImageUrl(fetchedImage);
-                }
+                // Get the image URL
+                const fetchedImage = await getPokemonImage(
+                    pokemonData.name,
+                    pokemonData.id
+                );
+                setImageUrl(fetchedImage);
             } catch (error) {
                 console.error("Error loading Pokemon image:", error);
                 setImageUrl(POKE_BALL); // Fallback to default image
@@ -192,18 +191,13 @@ const PokemonCard = ({
         };
 
         loadPokemonImage();
-    }, [pokemonData, imageSource]);
+    }, [pokemonData, imageSource, preloadedData, customImage]);
 
     /**
      * Animation configuration
-     *
-     * Framer Motion uses "variants" to define animation states.
-     * These variants create a coordinated animation system where
-     * parent elements can drive child animations, making complex
-     * interactions feel cohesive and natural.
      */
 
-    // Main card animation (lifts up and adds shadow on hover)
+    // Main card animation
     const cardVariants = {
         initial: {
             y: 0,
@@ -219,7 +213,7 @@ const PokemonCard = ({
         },
     };
 
-    // Pokemon image animation (scales up and wiggles on hover)
+    // Pokemon image animation
     const imageVariants = {
         initial: {
             scale: 1,
@@ -257,9 +251,6 @@ const PokemonCard = ({
 
     /**
      * Card mount/unmount animations
-     *
-     * Controls how the card appears and disappears when switching
-     * between loading, error, and ready states.
      */
     const containerVariants = {
         exit: {
@@ -276,9 +267,6 @@ const PokemonCard = ({
 
     /**
      * Extracts type information for styling
-     *
-     * Determines primary, secondary, and tertiary types to use for
-     * various visual elements like backgrounds, borders, and accents.
      */
     const typeInfo = pokemonData
         ? extractTypeInfo(pokemonData, typeCount)
@@ -294,11 +282,6 @@ const PokemonCard = ({
 
     /**
      * Render component with conditional states
-     *
-     * AnimatePresence handles smooth transitions between three possible states:
-     * 1. Loading - Shows spinner while fetching data
-     * 2. Error - Shows message when Pokemon can't be found
-     * 3. Ready - Displays the fully loaded Pokemon card
      */
     return (
         <AnimatePresence mode="wait">

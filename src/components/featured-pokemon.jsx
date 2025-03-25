@@ -1,7 +1,10 @@
 "use client";
 
 import PokemonCard from "@/components/pokemon-card";
-import { getFeaturedPokemon } from "@/services/pokemon-service";
+import {
+    getFeaturedPokemon,
+    getHomePageData,
+} from "@/services/pokemon-service";
 import { useEffect, useState } from "react";
 
 export function FeaturedPokemon({
@@ -23,9 +26,13 @@ export function FeaturedPokemon({
         async function loadFeaturedPokemon() {
             setIsLoading(true);
             try {
-                // Use our new function that handles caching
-                const pokemonList = await getFeaturedPokemon(maxDisplay);
-                setFeaturedPokemon(pokemonList);
+                // Use consolidated data fetching that includes sprite URLs
+                const data = await getHomePageData({
+                    featuredCount: maxDisplay,
+                    includeFullData: true,
+                });
+
+                setFeaturedPokemon(data.featuredPokemon);
             } catch (error) {
                 console.error("Error loading featured Pokemon:", error);
             } finally {
@@ -59,11 +66,11 @@ export function FeaturedPokemon({
                                   <PokemonCard pokemonIdOrName={null} />
                               </div>
                           ))
-                        : // Show actual Pokemon cards
+                        : // Show actual Pokemon cards with preloaded data
                           featuredPokemon.map((pokemon) => (
                               <PokemonCard
                                   key={pokemon.id || pokemon.name}
-                                  pokemonIdOrName={pokemon.name || pokemon.id}
+                                  preloadedData={pokemon} // Pass preloaded data with sprite URL
                               />
                           ))}
                 </div>
