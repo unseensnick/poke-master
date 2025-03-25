@@ -12,8 +12,29 @@ import * as React from "react";
 export function NavMenu() {
     const pathname = usePathname();
 
-    const NavLink = ({ href, children }) => {
+    const NavLink = ({ href, children, disabled = false }) => {
         const isActive = pathname === href;
+
+        // If disabled, just return a styled span with no navigation capabilities
+        if (disabled) {
+            return (
+                <NavigationMenuItem>
+                    <div
+                        className={`
+                            text-xs sm:text-base whitespace-nowrap px-2 py-1 
+                            text-foreground/40 cursor-not-allowed
+                            flex items-center
+                        `}
+                        onClick={(e) => e.preventDefault()} // Prevent any default action
+                    >
+                        {children}
+                        <span className="ml-1 text-[10px] bg-foreground/10 text-foreground/60 rounded-md px-1.5">
+                            Soon
+                        </span>
+                    </div>
+                </NavigationMenuItem>
+            );
+        }
 
         return (
             <NavigationMenuItem>
@@ -44,8 +65,12 @@ export function NavMenu() {
             <NavigationMenuList className="flex gap-2 sm:gap-3 md:gap-4">
                 <NavLink href="/">Home</NavLink>
                 <NavLink href="/explore">Explore</NavLink>
-                <NavLink href="/battle">Battle</NavLink>
-                <NavLink href="/team">Team</NavLink>
+                <NavLink href="/battle" disabled={true}>
+                    Battle
+                </NavLink>
+                <NavLink href="/team" disabled={true}>
+                    Team
+                </NavLink>
             </NavigationMenuList>
         </NavigationMenu>
     );

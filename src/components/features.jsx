@@ -1,3 +1,5 @@
+"use client";
+
 import {
     Card,
     CardContent,
@@ -5,7 +7,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { MoveRight } from "lucide-react";
+import { MoveRight, Timer } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -19,6 +21,7 @@ export function FeaturesSection() {
             altText: "Pokémon exploration illustration",
             link: "/explore",
             color: "var(--color-pokemon-grass)",
+            comingSoon: false,
         },
         {
             title: "Battle Simulator",
@@ -28,6 +31,7 @@ export function FeaturesSection() {
             altText: "Pokémon battle simulator illustration",
             link: "/battle",
             color: "var(--color-pokemon-fire)",
+            comingSoon: true,
         },
         {
             title: "Team Builder",
@@ -37,6 +41,7 @@ export function FeaturesSection() {
             altText: "Pokémon team builder illustration",
             link: "/team",
             color: "var(--color-pokemon-water)",
+            comingSoon: true,
         },
     ];
 
@@ -58,7 +63,12 @@ export function FeaturesSection() {
                     {features.map((feature, index) => (
                         <Card
                             key={index}
-                            className="rounded-xl overflow-hidden border border-border/40 hover:border-primary/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                            className={`rounded-xl overflow-hidden border border-border/40 
+                            ${
+                                feature.comingSoon
+                                    ? "opacity-80"
+                                    : "hover:border-primary/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                            }`}
                         >
                             <div className="h-48 relative bg-muted/30 overflow-hidden">
                                 {/* Feature image with themed background */}
@@ -76,11 +86,25 @@ export function FeaturesSection() {
                                         className="object-contain size-auto max-h-40 p-4"
                                     />
                                 </div>
+
+                                {feature.comingSoon && (
+                                    <div className="absolute top-0 right-0 bg-background/80 px-3 py-1 rounded-bl-lg flex items-center">
+                                        <Timer className="mr-1 size-3 text-foreground/70" />
+                                        <span className="text-xs font-medium text-foreground/70">
+                                            Coming Soon
+                                        </span>
+                                    </div>
+                                )}
                             </div>
 
                             <CardHeader className="pt-6">
                                 <CardTitle className="text-2xl font-bold text-foreground">
                                     {feature.title}
+                                    {feature.comingSoon && (
+                                        <span className="sr-only">
+                                            (Coming Soon)
+                                        </span>
+                                    )}
                                 </CardTitle>
                             </CardHeader>
 
@@ -91,13 +115,23 @@ export function FeaturesSection() {
                             </CardContent>
 
                             <CardFooter className="pt-2 pb-6">
-                                <Link
-                                    href={feature.link}
-                                    className="flex items-center text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-                                >
-                                    Learn more
-                                    <MoveRight className="ml-1 size-4" />
-                                </Link>
+                                {feature.comingSoon ? (
+                                    <div
+                                        className="flex items-center text-sm font-medium text-primary/50 cursor-not-allowed"
+                                        onClick={(e) => e.preventDefault()}
+                                    >
+                                        Coming soon
+                                        <Timer className="ml-1 size-4" />
+                                    </div>
+                                ) : (
+                                    <Link
+                                        href={feature.link}
+                                        className="flex items-center text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                                    >
+                                        Learn more
+                                        <MoveRight className="ml-1 size-4" />
+                                    </Link>
+                                )}
                             </CardFooter>
                         </Card>
                     ))}
