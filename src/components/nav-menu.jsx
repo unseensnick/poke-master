@@ -71,6 +71,7 @@ export function NavMenu() {
                 <NavLink href="/team" disabled={true}>
                     Team
                 </NavLink>
+                <NavLink href="/card-demo">Card Demo</NavLink>
             </NavigationMenuList>
         </NavigationMenu>
     );

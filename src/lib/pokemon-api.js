@@ -25,25 +25,34 @@ export const SPRITE_URLS = {
  * Throws errors for other HTTP or network issues to enable upstream handling.
  *
  * @param {string} endpoint - API endpoint to fetch (without base URL)
+ * @param {boolean} suppressNotFoundErrors - Whether to suppress 404 error messages (default: false)
  * @returns {Promise<Object|null>} - JSON response or null for 404s
  * @throws {Error} For network errors or non-404 HTTP errors
  */
-export const fetchFromApi = async (endpoint) => {
+export const fetchFromApi = async (
+    endpoint,
+    suppressNotFoundErrors = false
+) => {
     try {
-        console.log(`Fetching from API: ${API_BASE_URL}${endpoint}`);
         const response = await fetch(`${API_BASE_URL}${endpoint}`);
 
         if (!response.ok) {
             if (response.status === 404) {
-                console.warn(`Resource not found: ${endpoint}`);
-                throw new Error(`Resource not found: ${endpoint}`);
+                // Only log the warning if we're not suppressing not-found errors
+                if (!suppressNotFoundErrors) {
+                    console.warn(`Resource not found: ${endpoint}`);
+                }
+                return null;
             }
             throw new Error(`API error: ${response.status}`);
         }
 
         return await response.json();
     } catch (error) {
-        console.error(`Error fetching from API: ${error.message}`);
+        // Only log the error if it's not a 404 or we're not suppressing not-found errors
+        if (!(error.message.includes("not found") && suppressNotFoundErrors)) {
+            console.error(`Error fetching from API: ${error.message}`);
+        }
         throw error;
     }
 };

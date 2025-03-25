@@ -110,9 +110,10 @@ export const initializePokemon = (pokemonData, customImage = null) => {
  * 3. Standardizing data format for consistent use throughout the app
  *
  * @param {string|number} idOrName - Pokemon ID or name
+ * @param {boolean} suppressErrors - Whether to suppress not-found error logs (default: false)
  * @returns {Promise<Object|null>} - Formatted Pokemon data or null if not found
  */
-export const getPokemon = async (idOrName) => {
+export const getPokemon = async (idOrName, suppressErrors = false) => {
     if (!idOrName) return null;
 
     const cacheKey = String(idOrName).toLowerCase().trim();
@@ -136,11 +137,13 @@ export const getPokemon = async (idOrName) => {
     }
 
     try {
-        console.log(`Fetching Pokemon data for: ${idOrName}`);
-        // Use fetchFromApi instead of direct fetch
-        const rawData = await fetchFromApi(`/pokemon/${cacheKey}`);
+        // Use fetchFromApi with the suppressErrors flag
+        const rawData = await fetchFromApi(
+            `/pokemon/${cacheKey}`,
+            suppressErrors
+        );
 
-        // The updated fetchFromApi returns null for 404s
+        // If null returned (404 error), return null
         if (!rawData) {
             registerCustomPokemon(idOrName);
             return null;
@@ -158,7 +161,12 @@ export const getPokemon = async (idOrName) => {
 
         return formatted;
     } catch (error) {
-        console.warn(`Error fetching Pokemon ${idOrName}: ${error.message}`);
+        // Only log the warning if we're not suppressing errors
+        if (!suppressErrors) {
+            console.warn(
+                `Error fetching Pokemon ${idOrName}: ${error.message}`
+            );
+        }
         return null;
     }
 };
