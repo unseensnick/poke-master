@@ -1,27 +1,27 @@
 import { DEFAULT_FEATURED_POKEMON } from "@/lib/pokemon-constants";
 import { PrismaClient } from "@prisma/client";
 
-// Prevent multiple database connections in development
+// Create a single database connection that persists between hot reloads in development
 const globalForPrisma = global;
 export const prisma = globalForPrisma.prisma || new PrismaClient();
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
 /**
- * Gets a single Pokemon by ID or name
+ * Finds a single Pokemon by ID or name
  *
- * @param {string|number} idOrName - Pokemon ID or name
- * @returns {Object|null} Pokemon data or null if not found
+ * @param {string|number} idOrName - The Pokemon's ID number or name
+ * @returns {Object|null} Pokemon data object or null if not found
  */
 export async function getPokemonFromDB(idOrName) {
     try {
         let where = {};
 
-        // Check if search term is a number or string
+        // Determine if searching by ID (number) or name (string)
         if (typeof idOrName === "number" || !isNaN(parseInt(idOrName))) {
             where = { id: parseInt(idOrName) };
         } else {
-            // Case-insensitive name search
+            // Search by name (case-insensitive)
             where = {
                 name: {
                     contains: idOrName.toString(),
@@ -30,7 +30,7 @@ export async function getPokemonFromDB(idOrName) {
             };
         }
 
-        // Only show standard Pokemon (ID <= 1025)
+        // Limit to standard Pokemon only (ID <= 1025)
         where = {
             ...where,
             id: {
@@ -48,17 +48,17 @@ export async function getPokemonFromDB(idOrName) {
 }
 
 /**
- * Gets filtered Pokemon list with pagination
+ * Gets a filtered list of Pokemon with pagination
  *
- * @param {Object} options - Filter and pagination options
- * @param {number} options.limit - Max results to return
- * @param {number} options.offset - Starting position
- * @param {Array} options.types - Pokemon types to include
- * @param {number} options.generation - Generation to filter by
- * @param {string} options.game - Game to filter by
- * @param {string} options.searchQuery - Text to search for
- * @param {string} options.sortOrder - How to sort results
- * @returns {Array} Filtered Pokemon list
+ * @param {Object} options - Search and filter options
+ * @param {number} options.limit - Maximum number of results to return
+ * @param {number} options.offset - Starting position for pagination
+ * @param {Array} options.types - Pokemon types to include (e.g., ["fire", "water"])
+ * @param {number} options.generation - Generation number to filter by (1-9)
+ * @param {string} options.game - Game ID to filter by (e.g., "red-blue")
+ * @param {string} options.searchQuery - Text to search for in Pokemon names
+ * @param {string} options.sortOrder - How to sort results (e.g., "id-asc", "name-desc")
+ * @returns {Array} List of Pokemon matching the criteria
  */
 export async function getPokemonListFromDB({
     limit = 20,
@@ -70,7 +70,7 @@ export async function getPokemonListFromDB({
     sortOrder = "id-asc",
 }) {
     try {
-        // Start with ID filter (standard Pokemon only)
+        // Start with base filter for standard Pokemon
         let where = {
             id: {
                 lte: 1025,
@@ -82,8 +82,9 @@ export async function getPokemonListFromDB({
             where = {
                 ...where,
                 OR: [
+                    // Search by name
                     { name: { contains: searchQuery, mode: "insensitive" } },
-                    // If search is a number, also try matching ID
+                    // Search by ID if searchQuery is a number
                     isNaN(parseInt(searchQuery))
                         ? undefined
                         : {
@@ -106,6 +107,7 @@ export async function getPokemonListFromDB({
 
         // Filter by game (using generation as proxy)
         if (game) {
+            // Map each game to its generation number
             const gameToGen = {
                 // Generation 1
                 "red-blue": 1,
@@ -165,7 +167,7 @@ export async function getPokemonListFromDB({
             };
         }
 
-        // Determine sort order
+        // Set up sort order
         let orderBy = {};
         switch (sortOrder) {
             case "id-asc":
@@ -184,7 +186,7 @@ export async function getPokemonListFromDB({
                 orderBy = { id: "asc" };
         }
 
-        // Execute database query
+        // Run the database query
         const pokemon = await prisma.pokemon.findMany({
             where,
             orderBy,
@@ -196,7 +198,7 @@ export async function getPokemonListFromDB({
             },
         });
 
-        // Format results
+        // Format IDs with leading zeros (e.g., 0001, 0025)
         return pokemon.map((p) => ({
             id: p.id.toString().padStart(4, "0"),
             name: p.name,
@@ -208,7 +210,7 @@ export async function getPokemonListFromDB({
 }
 
 /**
- * Gets all Pokemon types (excluding Stellar)
+ * Gets all Pokemon types from the database
  *
  * @returns {Array} List of Pokemon types
  */
@@ -232,16 +234,14 @@ export async function getPokemonTypesFromDB() {
 }
 
 /**
- * Creates a daily seed based on Norway time
- * Used for consistent random Pokemon selection
+ * Creates a consistent daily seed value based on the date in Norway time
+ * This ensures the same random Pokemon are selected all day
  *
- * @returns {number} A consistent number 0-1 for the day
+ * @returns {number} A number between 0-1 that's the same all day
  */
 function getDailyNorwaySeed() {
-    // Get current date in Norway time (UTC+1/UTC+2)
+    // Get current date in Norway time zone
     const now = new Date();
-
-    // Convert to Norway time
     const formatter = new Intl.DateTimeFormat("no", {
         timeZone: "Europe/Oslo",
         year: "numeric",
@@ -249,7 +249,7 @@ function getDailyNorwaySeed() {
         day: "numeric",
     });
 
-    // Get date parts in Norway time
+    // Extract date parts (year, month, day) from the formatted date
     const norwayDate = formatter.formatToParts(now).reduce((acc, part) => {
         if (part.type !== "literal") {
             acc[part.type] = parseInt(part.value);
@@ -257,7 +257,7 @@ function getDailyNorwaySeed() {
         return acc;
     }, {});
 
-    // Calculate day of year (a number between 1-366)
+    // Calculate day of year (1-366) for more variety in the seed
     const startOfYear = new Date(Date.UTC(norwayDate.year, 0, 1));
     const timezoneOffset = new Date().getTimezoneOffset() * 60000;
     const startOfDay = new Date(
@@ -266,22 +266,21 @@ function getDailyNorwaySeed() {
     startOfDay.setTime(startOfDay.getTime() + timezoneOffset);
     const dayOfYear = Math.floor((startOfDay - startOfYear) / 86400000) + 1;
 
-    // Create a deterministic seed between 0 and 1
-    // Use day of year / 1000 to get a stable value that works well with PostgreSQL's setseed
+    // Create a number between 0-1 that only changes once per day
     return dayOfYear / 1000 + (norwayDate.year % 100) / 10000;
 }
 
-// Cache for featured Pokemon to avoid inconsistencies on refresh
+// Memory cache to keep featured Pokemon consistent during page refreshes
 let featuredPokemonCache = {
     date: null,
     pokemon: null,
 };
 
 /**
- * Gets featured Pokemon (changes daily)
+ * Gets a list of featured Pokemon that changes daily
  *
  * @param {number} count - Number of Pokemon to return
- * @returns {Array} Featured Pokemon
+ * @returns {Array} List of featured Pokemon
  */
 export async function getFeaturedPokemonFromDB(count = 4) {
     try {
@@ -295,7 +294,7 @@ export async function getFeaturedPokemonFromDB(count = 4) {
         });
         const currentDateString = dateFormatter.format(now);
 
-        // Check if we have cached data for today
+        // Return cached results if we already have today's featured Pokemon
         if (
             featuredPokemonCache.date === currentDateString &&
             featuredPokemonCache.pokemon
@@ -303,48 +302,43 @@ export async function getFeaturedPokemonFromDB(count = 4) {
             return featuredPokemonCache.pokemon;
         }
 
-        // Get consistent daily seed
+        // Get a seed value that's consistent for the whole day
         const dailySeed = getDailyNorwaySeed();
         console.log(`Using seed ${dailySeed} for date ${currentDateString}`);
 
-        // Create a more stable query
-        // Get all Pokemon IDs first, then use JavaScript to select a fixed set
+        // Get all eligible Pokemon
         const allPokemon = await prisma.pokemon.findMany({
             where: { id: { lte: 1025 } },
             select: { id: true, name: true },
             orderBy: { id: "asc" },
         });
 
-        // Use the seed to deterministically select Pokemon
-        const seedRandom = (seed, max) => {
-            // Simple deterministic random number generator
-            const x = Math.sin(seed) * 10000;
-            return Math.floor((x - Math.floor(x)) * max);
-        };
-
-        // Use the seed to shuffle array
+        // Create a shuffled copy of the Pokemon list
         const shuffled = [...allPokemon];
         let currentIndex = shuffled.length;
         let seedValue = dailySeed * 10000;
 
-        // Fisher-Yates shuffle algorithm with our seeded random
+        // Shuffle the array using Fisher-Yates algorithm with our custom seed
+        // This ensures we get the same "random" selection every time with the same seed
         while (currentIndex > 0) {
             seedValue = (seedValue * 9301 + 49297) % 233280;
             const randomIndex = Math.floor((seedValue / 233280) * currentIndex);
             currentIndex--;
+
+            // Swap elements
             [shuffled[currentIndex], shuffled[randomIndex]] = [
                 shuffled[randomIndex],
                 shuffled[currentIndex],
             ];
         }
 
-        // Take the first 'count' Pokemon
+        // Take the first 'count' Pokemon after shuffling
         const featured = shuffled.slice(0, count).map((p) => ({
             id: p.id.toString().padStart(4, "0"),
             name: p.name,
         }));
 
-        // Cache the results
+        // Save to cache
         featuredPokemonCache = {
             date: currentDateString,
             pokemon: featured,
@@ -353,27 +347,25 @@ export async function getFeaturedPokemonFromDB(count = 4) {
         return featured;
     } catch (error) {
         console.error("Error fetching featured Pokémon:", error);
-
-        // Return fallback Pokemon from constants
+        // Return default Pokemon list if there's an error
         return DEFAULT_FEATURED_POKEMON;
     }
 }
 
 /**
- * Gets a single Pokemon with sprite data
+ * Gets a Pokemon with its sprite data
  *
  * @param {string|number} pokemonId - Pokemon ID or name
- * @returns {Object|null} Pokemon with sprites or null
+ * @returns {Object|null} Pokemon with sprites field or null if not found
  */
 export async function getPokemonWithSpritesFromDB(pokemonId) {
     try {
         let where = {};
 
-        // Check if pokemonId is a number
+        // Determine if searching by ID or name
         if (typeof pokemonId === "number" || !isNaN(parseInt(pokemonId))) {
             where = { id: parseInt(pokemonId) };
         } else {
-            // Case-insensitive name search
             where = {
                 name: {
                     contains: pokemonId.toString(),
@@ -382,7 +374,7 @@ export async function getPokemonWithSpritesFromDB(pokemonId) {
             };
         }
 
-        // Only show standard Pokemon
+        // Limit to standard Pokemon
         where = {
             ...where,
             id: {
@@ -391,7 +383,7 @@ export async function getPokemonWithSpritesFromDB(pokemonId) {
             },
         };
 
-        // Get Pokemon with sprite data
+        // Get Pokemon with sprite data included
         const pokemon = await prisma.pokemon.findFirst({
             where,
             select: {
