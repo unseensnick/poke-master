@@ -1,5 +1,3 @@
-// lib/animation-variants.js
-
 /**
  * Shared animation variants for consistent motion throughout the application
  * These can be imported and used with Framer Motion components

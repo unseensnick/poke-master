@@ -1,4 +1,3 @@
-// hooks/use-pokemon.js
 import { POKE_BALL } from "@/lib/pokemon-api";
 import {
     getPokemon,

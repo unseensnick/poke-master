@@ -1,4 +1,3 @@
-// components/pokemon-card.jsx
 "use client";
 
 import { POKE_BALL } from "@/lib/pokemon-api";

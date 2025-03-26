@@ -1,4 +1,3 @@
-// components/ui/loading-spinner.jsx
 "use client";
 
 import { spinnerVariants } from "@/lib/animation-variants";
