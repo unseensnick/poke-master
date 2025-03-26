@@ -43,6 +43,8 @@ export function NavMenu() {
                         className={`
                             text-xs sm:text-base whitespace-nowrap px-2 py-1 
                             hover:text-foreground hover:bg-transparent relative 
+                            focus:bg-transparent active:bg-transparent focus:outline-none
+                            focus-visible:bg-transparent focus-visible:ring-0
                             after:absolute after:block after:content-[''] after:h-0.5 after:bg-primary 
                             after:rounded-full after:w-0 after:left-1/2 after:-translate-x-1/2 after:bottom-[4px]
                             after:transition-all hover:after:w-[105%] transition-colors

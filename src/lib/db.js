@@ -115,7 +115,36 @@ export async function getPokemonListFromDB({
                 "gold-silver": 2,
                 crystal: 2,
 
-                // And so on for other games...
+                // Generation 3
+                "ruby-sapphire": 3,
+                emerald: 3,
+                "firered-leafgreen": 3,
+
+                // Generation 4
+                "diamond-pearl": 4,
+                platinum: 4,
+                "heartgold-soulsilver": 4,
+
+                // Generation 5
+                "black-white": 5,
+                "black2-white2": 5,
+
+                // Generation 6
+                "x-y": 6,
+                "omega-ruby-alpha-sapphire": 6,
+
+                // Generation 7
+                "sun-moon": 7,
+                "ultra-sun-ultra-moon": 7,
+                "lets-go-pikachu-eevee": 7,
+
+                // Generation 8
+                "sword-shield": 8,
+                "brilliant-diamond-shining-pearl": 8,
+                "legends-arceus": 8,
+
+                // Generation 9
+                "scarlet-violet": 9,
             };
 
             if (gameToGen[game]) {
@@ -206,7 +235,7 @@ export async function getPokemonTypesFromDB() {
  * Creates a daily seed based on Norway time
  * Used for consistent random Pokemon selection
  *
- * @returns {string} Date string for seeding
+ * @returns {number} A consistent number 0-1 for the day
  */
 function getDailyNorwaySeed() {
     // Get current date in Norway time (UTC+1/UTC+2)
@@ -216,16 +245,37 @@ function getDailyNorwaySeed() {
     const formatter = new Intl.DateTimeFormat("no", {
         timeZone: "Europe/Oslo",
         year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
+        month: "numeric",
+        day: "numeric",
     });
 
-    // Get date string in Norway time
-    const norwayDateString = formatter.format(now);
+    // Get date parts in Norway time
+    const norwayDate = formatter.formatToParts(now).reduce((acc, part) => {
+        if (part.type !== "literal") {
+            acc[part.type] = parseInt(part.value);
+        }
+        return acc;
+    }, {});
 
-    // Return in YYYYMMDD format
-    return norwayDateString.replace(/\D/g, "");
+    // Calculate day of year (a number between 1-366)
+    const startOfYear = new Date(Date.UTC(norwayDate.year, 0, 1));
+    const timezoneOffset = new Date().getTimezoneOffset() * 60000;
+    const startOfDay = new Date(
+        Date.UTC(norwayDate.year, norwayDate.month - 1, norwayDate.day)
+    );
+    startOfDay.setTime(startOfDay.getTime() + timezoneOffset);
+    const dayOfYear = Math.floor((startOfDay - startOfYear) / 86400000) + 1;
+
+    // Create a deterministic seed between 0 and 1
+    // Use day of year / 1000 to get a stable value that works well with PostgreSQL's setseed
+    return dayOfYear / 1000 + (norwayDate.year % 100) / 10000;
 }
+
+// Cache for featured Pokemon to avoid inconsistencies on refresh
+let featuredPokemonCache = {
+    date: null,
+    pokemon: null,
+};
 
 /**
  * Gets featured Pokemon (changes daily)
@@ -235,25 +285,72 @@ function getDailyNorwaySeed() {
  */
 export async function getFeaturedPokemonFromDB(count = 4) {
     try {
-        // Get seed for consistent daily selection
+        // Get current date in Norway timezone
+        const now = new Date();
+        const dateFormatter = new Intl.DateTimeFormat("no", {
+            timeZone: "Europe/Oslo",
+            year: "numeric",
+            month: "numeric",
+            day: "numeric",
+        });
+        const currentDateString = dateFormatter.format(now);
+
+        // Check if we have cached data for today
+        if (
+            featuredPokemonCache.date === currentDateString &&
+            featuredPokemonCache.pokemon
+        ) {
+            return featuredPokemonCache.pokemon;
+        }
+
+        // Get consistent daily seed
         const dailySeed = getDailyNorwaySeed();
+        console.log(`Using seed ${dailySeed} for date ${currentDateString}`);
 
-        // Use seed to get the same Pokemon all day
-        const featuredPokemon = await prisma.$queryRaw`
-            SELECT id, name 
-            FROM (
-                SELECT *, setseed(${parseFloat("0." + dailySeed)})
-                FROM "Pokemon"
-                WHERE id <= 1025
-            ) AS seeded_pokemon
-            ORDER BY random() 
-            LIMIT ${count}
-        `;
+        // Create a more stable query
+        // Get all Pokemon IDs first, then use JavaScript to select a fixed set
+        const allPokemon = await prisma.pokemon.findMany({
+            where: { id: { lte: 1025 } },
+            select: { id: true, name: true },
+            orderBy: { id: "asc" },
+        });
 
-        return featuredPokemon.map((p) => ({
+        // Use the seed to deterministically select Pokemon
+        const seedRandom = (seed, max) => {
+            // Simple deterministic random number generator
+            const x = Math.sin(seed) * 10000;
+            return Math.floor((x - Math.floor(x)) * max);
+        };
+
+        // Use the seed to shuffle array
+        const shuffled = [...allPokemon];
+        let currentIndex = shuffled.length;
+        let seedValue = dailySeed * 10000;
+
+        // Fisher-Yates shuffle algorithm with our seeded random
+        while (currentIndex > 0) {
+            seedValue = (seedValue * 9301 + 49297) % 233280;
+            const randomIndex = Math.floor((seedValue / 233280) * currentIndex);
+            currentIndex--;
+            [shuffled[currentIndex], shuffled[randomIndex]] = [
+                shuffled[randomIndex],
+                shuffled[currentIndex],
+            ];
+        }
+
+        // Take the first 'count' Pokemon
+        const featured = shuffled.slice(0, count).map((p) => ({
             id: p.id.toString().padStart(4, "0"),
             name: p.name,
         }));
+
+        // Cache the results
+        featuredPokemonCache = {
+            date: currentDateString,
+            pokemon: featured,
+        };
+
+        return featured;
     } catch (error) {
         console.error("Error fetching featured Pokémon:", error);
 
