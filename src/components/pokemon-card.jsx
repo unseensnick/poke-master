@@ -1,3 +1,4 @@
+// components/pokemon-card.jsx
 "use client";
 
 import { POKE_BALL } from "@/lib/pokemon-api";
@@ -12,23 +13,33 @@ import {
     getTopLeftAccentStyle,
     getTypeStyle,
 } from "@/lib/pokemon-styles";
-import {
-    getPokemon,
-    getPokemonImage,
-    initializePokemon,
-} from "@/services/pokemon-service";
+import { clearCache } from "@/services/pokemon-service";
 import { AnimatePresence, motion } from "framer-motion";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
 // Import shadcn/ui components
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
     Card,
     CardContent,
     CardFooter,
     CardHeader,
 } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+
+// Import our UI components
+import { ErrorMessage } from "@/components/ui/error-message";
+import { LoadingSpinner, Skeleton } from "@/components/ui/loading-spinner";
+
+// Import our custom hook
+import { usePokemon } from "@/hooks/use-pokemon";
+
+// Import shared animation variants
+import {
+    fadeVariants,
+    hoverVariants,
+    pokemonCardVariants,
+} from "@/lib/animation-variants";
 
 /**
  * PokemonCard - Interactive, visually rich card component for displaying Pokémon
@@ -45,225 +56,26 @@ const PokemonCard = ({
     pokemonIdOrName,
     typeCount = null,
     customImage = null,
-    preloadedData = null, // New prop for pre-loaded data
+    preloadedData = null,
 }) => {
-    // Component state variables
-    const [isHovered, setIsHovered] = useState(false);
-    const [pokemonData, setPokemonData] = useState(
-        pokemon || preloadedData || null
-    );
-    const [imageUrl, setImageUrl] = useState(
-        preloadedData?.spriteUrl || customImage || null
-    );
-    const [isLoadingData, setIsLoadingData] = useState(
-        !preloadedData && !pokemon && !!pokemonIdOrName
-    );
-    const [isLoadingImage, setIsLoadingImage] = useState(
-        !preloadedData?.spriteUrl && !customImage
-    );
-    const [error, setError] = useState(false);
-    const [isReady, setIsReady] = useState(!!pokemon || !!preloadedData);
-
-    // Add this after your cardKey useState:
-    // Ensure customImage is initialized
-    const [imageSource, setImageSource] = useState(customImage);
-
-    /**
-     * Unique identifier for tracking card transitions
-     */
-    const [cardKey, setCardKey] = useState(() => {
-        if (pokemon) {
-            initializePokemon(pokemon, customImage);
-        }
-        return (
-            preloadedData?.id ||
-            pokemon?.id ||
-            pokemon?.name ||
-            pokemonIdOrName ||
-            Date.now().toString()
-        );
+    // Use our custom hook for data fetching and state management
+    const {
+        pokemonData,
+        imageUrl,
+        isLoadingData,
+        isLoadingImage,
+        error,
+        isReady,
+        cardKey,
+    } = usePokemon({
+        pokemon,
+        pokemonIdOrName,
+        customImage,
+        preloadedData,
     });
 
-    /**
-     * Updates card when the Pokémon changes
-     */
-    useEffect(() => {
-        const newKey =
-            preloadedData?.id ||
-            pokemon?.id ||
-            pokemon?.name ||
-            pokemonIdOrName ||
-            Date.now().toString();
-        setCardKey(newKey);
-
-        setImageSource(customImage);
-
-        if (
-            (pokemon?.id ||
-                pokemon?.name ||
-                preloadedData?.id ||
-                preloadedData?.name) !== (pokemonData?.id || pokemonData?.name)
-        ) {
-            setIsReady(!!pokemon || !!preloadedData);
-            setPokemonData(pokemon || preloadedData || null);
-            setIsLoadingData(!preloadedData && !pokemon && !!pokemonIdOrName);
-            setError(false);
-            setImageUrl(preloadedData?.spriteUrl || customImage || null);
-            setIsLoadingImage(!preloadedData?.spriteUrl && !customImage);
-        }
-    }, [pokemon, pokemonIdOrName, customImage, preloadedData]);
-
-    /**
-     * Main data fetching effect - Loads Pokémon data
-     * Skip if preloadedData is provided
-     */
-    useEffect(() => {
-        if (pokemon || preloadedData) {
-            setPokemonData(pokemon || preloadedData);
-            setIsLoadingData(false);
-            // Only set ready if we also have image (for preloadedData) or after image loads (for pokemon)
-            if (preloadedData?.spriteUrl || customImage) {
-                setIsReady(true);
-            }
-            return;
-        }
-
-        if (!pokemonIdOrName) {
-            setIsLoadingData(false);
-            return;
-        }
-
-        const loadPokemonData = async () => {
-            setIsLoadingData(true);
-            setError(false);
-            setIsReady(false); // Reset ready state when loading starts
-
-            try {
-                const data = await getPokemon(pokemonIdOrName);
-                setPokemonData(data);
-            } catch (error) {
-                console.error("Error fetching Pokémon data:", error);
-                setError(true);
-            } finally {
-                setIsLoadingData(false);
-            }
-        };
-
-        loadPokemonData();
-    }, [pokemon, pokemonIdOrName, preloadedData, customImage]);
-
-    /**
-     * Secondary fetch effect - Loads Pokémon image
-     * Skip if preloadedData.spriteUrl is provided
-     */
-    useEffect(() => {
-        if (!pokemonData) {
-            setIsLoadingImage(false);
-            return;
-        }
-
-        // If we have a preloaded sprite URL or custom image, use it directly
-        if (preloadedData?.spriteUrl || customImage) {
-            setImageUrl(preloadedData?.spriteUrl || customImage);
-            setIsLoadingImage(false);
-            setIsReady(true);
-            return;
-        }
-
-        const loadPokemonImage = async () => {
-            setIsLoadingImage(true);
-
-            try {
-                // Get the image URL
-                const fetchedImage = await getPokemonImage(
-                    pokemonData.name,
-                    pokemonData.id
-                );
-                setImageUrl(fetchedImage);
-            } catch (error) {
-                console.error("Error loading Pokemon image:", error);
-                setImageUrl(POKE_BALL); // Fallback to default image
-            } finally {
-                setIsLoadingImage(false);
-                // Set ready state after both data and image are loaded
-                setIsReady(true);
-            }
-        };
-
-        loadPokemonImage();
-    }, [pokemonData, imageSource, preloadedData, customImage]);
-
-    /**
-     * Animation configuration
-     */
-
-    // Main card animation
-    const cardVariants = {
-        initial: {
-            y: 0,
-            boxShadow: "0px 0px 0px rgba(0,0,0,0)",
-        },
-        hover: {
-            y: -8, // Move up 8px
-            boxShadow: "0px 10px 15px rgba(0,0,0,0.2)",
-            transition: {
-                duration: 0.3,
-                ease: "easeOut",
-            },
-        },
-    };
-
-    // Pokemon image animation
-    const imageVariants = {
-        initial: {
-            scale: 1,
-            rotate: 0,
-        },
-        hover: {
-            scale: 1.05,
-            rotate: [0, -1, 1, -1, 1, 0], // Sequence creates wiggle effect
-            transition: {
-                scale: { duration: 0.2 },
-                rotate: {
-                    duration: 1,
-                    repeat: 1,
-                    repeatType: "mirror",
-                },
-            },
-        },
-    };
-
-    // Animations for card elements
-    const badgeVariants = {
-        initial: { scale: 1 },
-        hover: { scale: 1.05, transition: { duration: 0.2, delay: 0.1 } },
-    };
-
-    const accentVariants = {
-        initial: { opacity: 1 },
-        hover: { opacity: 0, transition: { duration: 0.4 } },
-    };
-
-    const borderVariants = {
-        initial: { opacity: 0 },
-        hover: { opacity: 1, transition: { duration: 0.4 } },
-    };
-
-    /**
-     * Card mount/unmount animations
-     */
-    const containerVariants = {
-        exit: {
-            opacity: 0,
-            scale: 0.95,
-            transition: { duration: 0.2, ease: "easeIn" },
-        },
-        enter: {
-            opacity: 1,
-            scale: 1,
-            transition: { duration: 0.3, ease: "easeOut" },
-        },
-    };
+    // Local component state for hover effects
+    const [isHovered, setIsHovered] = useState(false);
 
     /**
      * Extracts type information for styling
@@ -285,72 +97,56 @@ const PokemonCard = ({
      */
     return (
         <AnimatePresence mode="wait">
-            {/* LOADING STATE - Shows spinner while fetching data */}
+            {/* LOADING STATE */}
             {isLoadingData && (
                 <motion.div
                     key={`loading-${cardKey}`}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
+                    variants={fadeVariants.standard}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
                     className="will-change-transform rounded-xl"
                 >
                     <Card
                         data-slot="card"
-                        className="w-[300px] h-[480px] rounded-xl p-5 bg-gray-800 flex items-center justify-center border-0"
+                        className="w-[300px] h-[480px] rounded-xl p-5 bg-card flex items-center justify-center border-0"
                     >
-                        <Skeleton className="size-48 rounded-full flex items-center justify-center bg-gray-700/50">
-                            <motion.div
-                                animate={{
-                                    rotate: 360,
-                                }}
-                                transition={{
-                                    duration: 1.5,
-                                    repeat: Infinity,
-                                    ease: "linear",
-                                }}
-                                className="rounded-full size-12 border-t-2 border-b-2 border-white"
-                            />
+                        <Skeleton className="size-48 rounded-full flex items-center justify-center bg-muted/50">
+                            <LoadingSpinner size="md" />
                         </Skeleton>
                     </Card>
                 </motion.div>
             )}
 
-            {/* ERROR STATE - Shows message when Pokemon can't be found */}
+            {/* ERROR STATE */}
             {!isLoadingData && (error || (!pokemonData && !isLoadingData)) && (
                 <motion.div
                     key={`error-${cardKey}`}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.4 }}
+                    variants={fadeVariants.fadeUp}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
                     className="will-change-transform rounded-xl"
                 >
                     <Card
                         data-slot="card"
-                        className="w-[300px] h-[480px] rounded-xl p-5 bg-gray-800 flex flex-col items-center justify-center"
+                        className="w-[300px] h-[480px] rounded-xl p-5 bg-card flex flex-col items-center justify-center"
                     >
-                        <motion.img
-                            src={POKE_BALL}
-                            alt="Pokéball"
-                            className="size-24 mb-4 opacity-50"
-                            initial={{ rotate: 0 }}
-                            animate={{ rotate: [0, 10, 0, -10, 0] }}
-                            transition={{
-                                duration: 2,
-                                repeat: Infinity,
-                                repeatType: "mirror",
-                                ease: "easeInOut",
-                            }}
+                        <ErrorMessage
+                            message={`Pokémon Not Found${
+                                pokemonIdOrName ? `: ${pokemonIdOrName}` : ""
+                            }`}
+                            variant="warning"
+                            action={
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => clearCache()}
+                                >
+                                    Clear Cache
+                                </Button>
+                            }
                         />
-                        <p className="text-white text-center font-bold">
-                            Pokémon Not Found
-                        </p>
-                        {pokemonIdOrName && (
-                            <p className="text-gray-400 text-center mt-2">
-                                {pokemonIdOrName}
-                            </p>
-                        )}
                     </Card>
                 </motion.div>
             )}
@@ -359,7 +155,7 @@ const PokemonCard = ({
             {!isLoadingData && !error && pokemonData && isReady && (
                 <motion.div
                     key={`card-${cardKey}`}
-                    variants={containerVariants}
+                    variants={pokemonCardVariants.container}
                     initial="exit"
                     animate="enter"
                     exit="exit"
@@ -368,7 +164,7 @@ const PokemonCard = ({
                     <motion.div
                         initial="initial"
                         whileHover="hover"
-                        variants={cardVariants}
+                        variants={pokemonCardVariants.card}
                         onHoverStart={() => setIsHovered(true)}
                         onHoverEnd={() => setIsHovered(false)}
                         className="will-change-transform perspective-1000 rounded-xl"
@@ -383,7 +179,7 @@ const PokemonCard = ({
                         >
                             {/* Visual accents - Add depth with type-based colors */}
                             <motion.div
-                                variants={accentVariants}
+                                variants={pokemonCardVariants.accent}
                                 className="absolute top-0 left-0 size-[90px] rounded-tl-xl pointer-events-none"
                                 style={getTopLeftAccentStyle(
                                     effectiveTypeCount,
@@ -393,7 +189,7 @@ const PokemonCard = ({
 
                             {/* Bottom-right accent */}
                             <motion.div
-                                variants={accentVariants}
+                                variants={pokemonCardVariants.accent}
                                 className="absolute bottom-0 right-0 size-[90px] rounded-br-xl pointer-events-none"
                                 style={getBottomRightAccentStyle(
                                     effectiveTypeCount,
@@ -407,14 +203,14 @@ const PokemonCard = ({
                             {effectiveTypeCount === 3 && (
                                 <>
                                     <motion.div
-                                        variants={accentVariants}
+                                        variants={pokemonCardVariants.accent}
                                         className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-[180px] pointer-events-none z-[2] opacity-70"
                                         style={getRightSideAccentStyle(
                                             secondaryType
                                         )}
                                     />
                                     <motion.div
-                                        variants={accentVariants}
+                                        variants={pokemonCardVariants.accent}
                                         className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-[180px] pointer-events-none z-[2] opacity-70"
                                         style={getLeftSideAccentStyle(
                                             secondaryType
@@ -425,7 +221,7 @@ const PokemonCard = ({
 
                             {/* Animated border - Appears on hover */}
                             <motion.div
-                                variants={borderVariants}
+                                variants={pokemonCardVariants.border}
                                 className="absolute inset-0 rounded-xl border-4 border-transparent pointer-events-none overflow-hidden"
                                 style={{
                                     ...getBorderStyle(
@@ -444,7 +240,9 @@ const PokemonCard = ({
                             <div className="relative z-[1] h-full flex flex-col justify-between">
                                 {/* Pokemon ID badge */}
                                 <CardHeader className="p-0 m-0">
-                                    <motion.div variants={badgeVariants}>
+                                    <motion.div
+                                        variants={pokemonCardVariants.badge}
+                                    >
                                         <Badge
                                             data-slot="badge"
                                             variant="outline"
@@ -464,21 +262,16 @@ const PokemonCard = ({
                                     <div className="size-[180px] bg-[rgba(61,61,61,0.7)] rounded-full mx-auto mt-8 mb-5 flex items-center justify-center relative overflow-hidden">
                                         {isLoadingImage ? (
                                             <Skeleton className="size-[150px] rounded-full flex items-center justify-center">
-                                                <motion.div
-                                                    animate={{
-                                                        rotate: 360,
-                                                    }}
-                                                    transition={{
-                                                        duration: 1.5,
-                                                        repeat: Infinity,
-                                                        ease: "linear",
-                                                    }}
-                                                    className="rounded-full size-12 border-t-2 border-b-2 border-white"
+                                                <LoadingSpinner
+                                                    size="sm"
+                                                    color="muted"
                                                 />
                                             </Skeleton>
                                         ) : (
                                             <motion.img
-                                                variants={imageVariants}
+                                                variants={
+                                                    pokemonCardVariants.image
+                                                }
                                                 src={imageUrl || POKE_BALL}
                                                 alt={pokemonData.name}
                                                 className="size-[150px] object-contain"
@@ -510,13 +303,7 @@ const PokemonCard = ({
                                     {/* Pokemon name - animates on hover */}
                                     <motion.div
                                         className="text-center text-2xl font-bold my-2 text-white"
-                                        variants={{
-                                            hover: {
-                                                scale: 1.05,
-                                                y: -2,
-                                                transition: { duration: 0.2 },
-                                            },
-                                        }}
+                                        variants={hoverVariants.scaleLift}
                                     >
                                         {pokemonData.name}
                                     </motion.div>
@@ -525,15 +312,8 @@ const PokemonCard = ({
                                     <div className="flex justify-around w-full my-4">
                                         <motion.div
                                             className="flex flex-col items-center"
-                                            variants={{
-                                                hover: {
-                                                    y: -3,
-                                                    transition: {
-                                                        duration: 0.2,
-                                                        delay: 0.1,
-                                                    },
-                                                },
-                                            }}
+                                            variants={pokemonCardVariants.stats}
+                                            custom={0.1} // Use custom prop to control delay
                                         >
                                             <div className="text-gray-400 text-sm">
                                                 Weight
@@ -544,15 +324,8 @@ const PokemonCard = ({
                                         </motion.div>
                                         <motion.div
                                             className="flex flex-col items-center"
-                                            variants={{
-                                                hover: {
-                                                    y: -3,
-                                                    transition: {
-                                                        duration: 0.2,
-                                                        delay: 0.15,
-                                                    },
-                                                },
-                                            }}
+                                            variants={pokemonCardVariants.stats}
+                                            custom={0.15} // Use custom prop to control delay
                                         >
                                             <div className="text-gray-400 text-sm">
                                                 Height
@@ -574,16 +347,10 @@ const PokemonCard = ({
                                         .map((type, index) => (
                                             <motion.div
                                                 key={index}
-                                                variants={{
-                                                    hover: {
-                                                        y: -3,
-                                                        scale: 1.05,
-                                                        transition: {
-                                                            duration: 0.2,
-                                                            delay: 0.05 * index, // Staggered animation
-                                                        },
-                                                    },
-                                                }}
+                                                variants={
+                                                    pokemonCardVariants.typeBadge
+                                                }
+                                                custom={index} // Use index as custom prop to control staggered delay
                                             >
                                                 <Badge
                                                     data-slot="badge"

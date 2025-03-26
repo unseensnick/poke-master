@@ -4,17 +4,100 @@ import PokemonCard from "@/components/pokemon-card";
 import { PokemonFilters } from "@/components/pokemon-filters";
 import { PokemonSort } from "@/components/pokemon-sort";
 import { Button } from "@/components/ui/button";
+import { ErrorMessage } from "@/components/ui/error-message";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { getExplorePageData } from "@/services/pokemon-service";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
 
+// Import shared animation variants
+import {
+    containerVariants,
+    fadeVariants,
+    itemVariants,
+    pageTransitionVariants,
+} from "@/lib/animation-variants";
+
+// Memoized grid component to prevent re-renders
+const PokemonGrid = React.memo(({ pokemonList }) => {
+    return (
+        <motion.div
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center"
+            variants={containerVariants.grid}
+            initial="hidden"
+            animate="show"
+            exit="hidden"
+        >
+            {pokemonList.map((pokemon, index) => (
+                <motion.div
+                    key={`${pokemon.id}-${index}`}
+                    variants={itemVariants.card}
+                    className="w-full flex justify-center"
+                    // Use layout=false to avoid expensive layout animations
+                    layout={false}
+                >
+                    <PokemonCard preloadedData={pokemon} />
+                </motion.div>
+            ))}
+        </motion.div>
+    );
+});
+PokemonGrid.displayName = "PokemonGrid";
+
+// Empty state when no Pokémon match filters
+const EmptyState = React.memo(({ onClearFilters }) => {
+    return (
+        <motion.div
+            className="py-20"
+            variants={fadeVariants.standard}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+        >
+            <ErrorMessage
+                message="No Pokémon found matching your criteria."
+                variant="info"
+                action={
+                    <Button variant="default" onClick={onClearFilters}>
+                        Clear Filters
+                    </Button>
+                }
+            />
+        </motion.div>
+    );
+});
+EmptyState.displayName = "EmptyState";
+
+// Initial loading state
+const InitialLoading = React.memo(() => {
+    return (
+        <motion.div
+            className="flex justify-center py-20"
+            variants={fadeVariants.standard}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+        >
+            <LoadingSpinner size="lg" center />
+        </motion.div>
+    );
+});
+InitialLoading.displayName = "InitialLoading";
+
+// Page component
 export default function ExplorePage() {
-    // Get search parameters from URL
+    // Search params from URL
     const searchParams = useSearchParams();
     const searchQuery = searchParams.get("search") || "";
 
-    // State for Pokemon data and pagination
+    // State with performance optimizations
     const [pokemonList, setPokemonList] = useState([]);
     const [pokemonTypes, setPokemonTypes] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -22,26 +105,31 @@ export default function ExplorePage() {
     const [offset, setOffset] = useState(0);
     const [hasMore, setHasMore] = useState(true);
 
-    // State for filtering
+    // Filter states
     const [selectedTypes, setSelectedTypes] = useState([]);
     const [selectedGeneration, setSelectedGeneration] = useState(null);
     const [selectedGame, setSelectedGame] = useState(null);
     const [sortOrder, setSortOrder] = useState("id-asc");
 
-    // References
+    // References for optimization
     const loaderRef = useRef(null);
-
+    const prevSearchQueryRef = useRef(searchQuery);
+    const loadingTimerRef = useRef(null);
+    const hasTypesLoaded = useRef(false);
     const ITEMS_PER_PAGE = 20;
 
-    // Load initial data with a single request
+    // Load initial data with optimized promise handling
     useEffect(() => {
         async function loadInitialData() {
-            setIsLoading(true);
-            setInitialLoading(true);
-            setPokemonList([]); // Clear previous results
+            // Prevent excessive loading indicators for fast responses
+            const loadingTimer = setTimeout(() => {
+                setIsLoading(true);
+                setInitialLoading(true);
+            }, 100);
+            loadingTimerRef.current = loadingTimer;
 
             try {
-                // Make a single request for complete Pokemon data and types
+                // Make a single request for complete Pokemon data
                 const data = await getExplorePageData({
                     limit: ITEMS_PER_PAGE,
                     offset: 0,
@@ -50,34 +138,51 @@ export default function ExplorePage() {
                     game: selectedGame,
                     searchQuery: searchQuery,
                     sortOrder: sortOrder,
-                    includeTypes: true, // Also fetch types data
-                    includeFullData: true, // Get complete Pokemon data with sprites
+                    includeTypes: !hasTypesLoaded.current,
+                    includeFullData: true,
                 });
 
-                // Update state with the data from the single response
+                // Update states in a single render cycle using batched updates
                 setPokemonList(data.pokemonList || []);
-                setPokemonTypes(data.pokemonTypes || []);
 
-                // Update pagination state
-                if (
-                    !data.pokemonList ||
-                    data.pokemonList.length < ITEMS_PER_PAGE
-                ) {
-                    setHasMore(false);
-                } else {
-                    setOffset(ITEMS_PER_PAGE);
-                    setHasMore(true);
+                if (data.pokemonTypes && data.pokemonTypes.length > 0) {
+                    setPokemonTypes(data.pokemonTypes);
+                    hasTypesLoaded.current = true;
                 }
+
+                setHasMore(
+                    data.pokemonList &&
+                        data.pokemonList.length >= ITEMS_PER_PAGE
+                );
+                setOffset(ITEMS_PER_PAGE);
             } catch (error) {
                 console.error("Error loading initial data:", error);
                 setHasMore(false);
             } finally {
+                clearTimeout(loadingTimerRef.current);
                 setIsLoading(false);
                 setInitialLoading(false);
             }
         }
 
+        // Clear the list first to avoid keeping stale data during loading
+        if (
+            searchQuery !== prevSearchQueryRef.current ||
+            selectedTypes.length > 0 ||
+            selectedGeneration !== null ||
+            selectedGame !== null
+        ) {
+            setPokemonList([]);
+        }
+
+        prevSearchQueryRef.current = searchQuery;
         loadInitialData();
+
+        // Scroll back to top when filters change
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth",
+        });
     }, [
         selectedTypes,
         selectedGeneration,
@@ -86,14 +191,13 @@ export default function ExplorePage() {
         searchQuery,
     ]);
 
-    // Load more Pokemon when scrolling (pagination)
+    // Optimized load more function with debounce protection
     const loadMorePokemon = useCallback(async () => {
         if (isLoading || !hasMore) return;
 
         setIsLoading(true);
 
         try {
-            // Only need to fetch more Pokemon list items, not types
             const data = await getExplorePageData({
                 limit: ITEMS_PER_PAGE,
                 offset: offset,
@@ -102,8 +206,8 @@ export default function ExplorePage() {
                 game: selectedGame,
                 searchQuery: searchQuery,
                 sortOrder: sortOrder,
-                includeTypes: false, // Don't need types for pagination
-                includeFullData: true, // Still need complete data with sprites
+                includeTypes: false,
+                includeFullData: true,
             });
 
             const newPokemon = data.pokemonList || [];
@@ -111,14 +215,21 @@ export default function ExplorePage() {
             if (newPokemon.length === 0) {
                 setHasMore(false);
             } else {
-                setPokemonList((prev) => [...prev, ...newPokemon]);
+                // Append new data with a stable reference pattern
+                setPokemonList((prev) => {
+                    // Convert IDs to a Set for O(1) lookups
+                    const existingIds = new Set(prev.map((p) => p.id));
 
-                // If we got fewer results than requested, we've reached the end
-                if (newPokemon.length < ITEMS_PER_PAGE) {
-                    setHasMore(false);
-                } else {
-                    setOffset(offset + ITEMS_PER_PAGE);
-                }
+                    // Filter out duplicates before appending
+                    const uniqueNewPokemon = newPokemon.filter(
+                        (p) => !existingIds.has(p.id)
+                    );
+
+                    return [...prev, ...uniqueNewPokemon];
+                });
+
+                setHasMore(newPokemon.length >= ITEMS_PER_PAGE);
+                setOffset(offset + ITEMS_PER_PAGE);
             }
         } catch (error) {
             console.error("Error loading more Pokémon:", error);
@@ -137,19 +248,28 @@ export default function ExplorePage() {
         sortOrder,
     ]);
 
-    // Setup Intersection Observer for infinite scrolling
+    // Intersection Observer with cleanup and performance optimizations
     useEffect(() => {
-        const observer = new IntersectionObserver(
-            (entries) => {
-                const [entry] = entries;
-                if (entry.isIntersecting && !isLoading && hasMore) {
-                    loadMorePokemon();
-                }
-            },
-            { threshold: 0.1 }
-        );
+        // Use a more performant intersection observer
+        const options = {
+            root: null,
+            rootMargin: "100px", // Start loading earlier
+            threshold: 0.1,
+        };
 
+        const handleIntersection = (entries) => {
+            const [entry] = entries;
+            if (entry.isIntersecting && !isLoading && hasMore) {
+                // Use requestAnimationFrame to schedule loadMore on the next frame
+                requestAnimationFrame(() => {
+                    loadMorePokemon();
+                });
+            }
+        };
+
+        const observer = new IntersectionObserver(handleIntersection, options);
         const currentLoaderRef = loaderRef.current;
+
         if (currentLoaderRef) {
             observer.observe(currentLoaderRef);
         }
@@ -158,62 +278,88 @@ export default function ExplorePage() {
             if (currentLoaderRef) {
                 observer.unobserve(currentLoaderRef);
             }
+            observer.disconnect();
         };
     }, [loadMorePokemon, isLoading, hasMore]);
 
-    // Handle filter changes from PokemonFilters component
-    const handleFilterChange = (filters) => {
-        setSelectedTypes(filters.types || []);
-        setSelectedGeneration(filters.generation);
-        setSelectedGame(filters.game);
-    };
+    // Optimized handlers with proper memoization
+    const handleFilterChange = useCallback((filters) => {
+        // Use requestAnimationFrame to ensure UI updates first
+        requestAnimationFrame(() => {
+            setSelectedTypes(filters.types || []);
+            setSelectedGeneration(filters.generation);
+            setSelectedGame(filters.game);
 
-    // Handle sort changes
-    const handleSortChange = (value) => {
+            // Reset pagination for new filters
+            setOffset(0);
+        });
+    }, []);
+
+    const handleSortChange = useCallback((value) => {
         setSortOrder(value);
-    };
+    }, []);
 
-    // Function to clear all filters
-    const clearFilters = () => {
+    const clearFilters = useCallback(() => {
         setSelectedTypes([]);
         setSelectedGeneration(null);
         setSelectedGame(null);
-        // We don't reset sort order when clearing filters
-    };
+    }, []);
 
-    // Animation variants - unchanged
-    const containerVariants = {
-        hidden: { opacity: 0 },
-        show: {
-            opacity: 1,
-            transition: {
-                staggerChildren: 0.1,
-                delayChildren: 0.2,
-            },
-        },
-    };
+    // Memoize active filter count
+    const activeFilterCount = useMemo(() => {
+        return (
+            selectedTypes.length +
+            (selectedGeneration ? 1 : 0) +
+            (selectedGame ? 1 : 0)
+        );
+    }, [selectedTypes.length, selectedGeneration, selectedGame]);
 
-    const itemVariants = {
-        hidden: { y: 20, opacity: 0 },
-        show: {
-            y: 0,
-            opacity: 1,
-            transition: {
-                type: "spring",
-                stiffness: 300,
-                damping: 24,
-            },
-        },
-    };
+    // Memoize the Pokemon filters component
+    const filtersComponent = useMemo(
+        () => (
+            <PokemonFilters
+                onFilterChange={handleFilterChange}
+                selectedTypes={selectedTypes}
+                selectedGeneration={selectedGeneration}
+                selectedGame={selectedGame}
+                availableTypes={pokemonTypes}
+                className="flex-1"
+            />
+        ),
+        [
+            handleFilterChange,
+            selectedTypes,
+            selectedGeneration,
+            selectedGame,
+            // Only use pokemonTypes length as dependency to prevent re-renders when the data is the same
+            pokemonTypes.length && !hasTypesLoaded.current
+                ? pokemonTypes
+                : null,
+        ]
+    );
 
+    // Memoize the sort component
+    const sortComponent = useMemo(
+        () => (
+            <PokemonSort
+                value={sortOrder}
+                onChange={handleSortChange}
+                className="md:self-start"
+            />
+        ),
+        [sortOrder, handleSortChange]
+    );
+
+    // Main render with optimized AnimatePresence usage
     return (
         <div className="container mx-auto px-4 py-8">
-            {/* Hero section */}
+            {/* Hero section - using fadeDown variant */}
             <motion.div
                 className="mb-8 text-center"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
+                variants={fadeVariants.fadeDown}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
             >
                 <h1 className="text-4xl md:text-5xl font-bold mb-4">
                     Explore Pokémon
@@ -224,125 +370,83 @@ export default function ExplorePage() {
                 </p>
             </motion.div>
 
-            {/* Controls container with filter and sort */}
+            {/* Controls container */}
             <div className="flex flex-col md:flex-row gap-4 mb-8">
-                <PokemonFilters
-                    onFilterChange={handleFilterChange}
-                    selectedTypes={selectedTypes}
-                    selectedGeneration={selectedGeneration}
-                    selectedGame={selectedGame}
-                    availableTypes={pokemonTypes} // Pass types from consolidated request
-                    className="flex-1"
-                />
-
-                <PokemonSort
-                    value={sortOrder}
-                    onChange={handleSortChange}
-                    className="md:self-start"
-                />
+                {filtersComponent}
+                {sortComponent}
             </div>
 
-            {/* Loading state for initial load */}
-            {initialLoading ? (
-                <motion.div
-                    className="flex justify-center items-center py-20"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3 }}
-                >
-                    <div className="relative">
-                        <motion.div
-                            className="h-16 w-16 rounded-full border-4 border-primary border-t-transparent"
-                            animate={{ rotate: 360 }}
-                            transition={{
-                                duration: 1,
-                                repeat: Infinity,
-                                ease: "linear",
-                            }}
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="h-6 w-6 rounded-full bg-background"></div>
-                        </div>
-                    </div>
-                </motion.div>
-            ) : (
-                <>
-                    {/* Results section */}
-                    {pokemonList.length === 0 && !isLoading ? (
-                        <motion.div
-                            className="text-center py-20"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.3 }}
-                        >
-                            <p className="text-xl text-muted-foreground">
-                                No Pokémon found matching your criteria.
-                            </p>
-                            <Button
-                                variant="default"
-                                className="mt-4"
-                                onClick={clearFilters}
-                            >
-                                Clear Filters
-                            </Button>
-                        </motion.div>
-                    ) : (
-                        <motion.div
-                            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center"
-                            variants={containerVariants}
-                            initial="hidden"
-                            animate="show"
-                        >
-                            {pokemonList.map((pokemon, index) => (
+            {/* Content area with optimized AnimatePresence */}
+            <AnimatePresence mode="wait">
+                {initialLoading ? (
+                    <InitialLoading key="loading" />
+                ) : (
+                    <motion.div
+                        key="content"
+                        variants={fadeVariants.standard}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                        className="min-h-[400px]"
+                    >
+                        {/* Results with optimized transitions */}
+                        <AnimatePresence mode="wait">
+                            {pokemonList.length === 0 && !isLoading ? (
+                                <EmptyState
+                                    key="empty"
+                                    onClearFilters={clearFilters}
+                                />
+                            ) : (
+                                <PokemonGrid
+                                    key="grid"
+                                    pokemonList={pokemonList}
+                                />
+                            )}
+                        </AnimatePresence>
+
+                        {/* Optimized loading indicator */}
+                        <AnimatePresence>
+                            {isLoading && !initialLoading && (
                                 <motion.div
-                                    key={`${pokemon.id}-${index}`}
-                                    variants={itemVariants}
-                                    className="w-full flex justify-center"
+                                    key="more-loading"
+                                    className="flex justify-center mt-8 pb-8"
+                                    variants={fadeVariants.standard}
+                                    initial="hidden"
+                                    animate="visible"
+                                    exit="exit"
                                 >
-                                    <PokemonCard
-                                        preloadedData={pokemon} // Pass complete preloaded data including sprite URL
-                                    />
+                                    <LoadingSpinner size="md" />
                                 </motion.div>
-                            ))}
-                        </motion.div>
-                    )}
+                            )}
+                        </AnimatePresence>
 
-                    {/* Loading indicator for subsequent loads */}
-                    {isLoading && !initialLoading && (
-                        <motion.div
-                            className="flex justify-center mt-8 pb-8"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.3 }}
-                        >
-                            <motion.div
-                                className="h-10 w-10 rounded-full border-4 border-primary border-t-transparent"
-                                animate={{ rotate: 360 }}
-                                transition={{
-                                    duration: 1,
-                                    repeat: Infinity,
-                                    ease: "linear",
-                                }}
+                        {/* Infinite scroll trigger with enhanced visibility */}
+                        {hasMore && (
+                            <div
+                                ref={loaderRef}
+                                className="h-20 -mt-4"
+                                aria-hidden="true"
                             />
-                        </motion.div>
-                    )}
+                        )}
 
-                    {/* Infinite scroll trigger */}
-                    {hasMore && <div ref={loaderRef} className="h-20" />}
-
-                    {/* End of results message */}
-                    {!hasMore && pokemonList.length > 0 && (
-                        <motion.p
-                            className="text-center text-muted-foreground mt-8 pb-8"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.5 }}
-                        >
-                            You've reached the end of the list!
-                        </motion.p>
-                    )}
-                </>
-            )}
+                        {/* End of results message */}
+                        <AnimatePresence>
+                            {!hasMore && pokemonList.length > 0 && (
+                                <motion.p
+                                    key="end-message"
+                                    className="text-center text-muted-foreground mt-8 pb-8"
+                                    variants={fadeVariants.standard}
+                                    initial="hidden"
+                                    animate="visible"
+                                    exit="exit"
+                                >
+                                    You've reached the end of the list!
+                                </motion.p>
+                            )}
+                        </AnimatePresence>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

@@ -98,3 +98,14 @@ export const SORT_OPTIONS = [
     { value: "name-asc", label: "Name (A-Z)" },
     { value: "name-desc", label: "Name (Z-A)" },
 ];
+
+/**
+ * Default featured Pokémon for fallback when API calls fail
+ * Used across both client and server-side code
+ */
+export const DEFAULT_FEATURED_POKEMON = [
+    { name: "Bulbasaur", id: "0001" },
+    { name: "Pikachu", id: "0025" },
+    { name: "Charizard", id: "0006" },
+    { name: "Lucario", id: "0448" },
+];

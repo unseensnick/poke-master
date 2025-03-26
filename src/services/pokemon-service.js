@@ -8,86 +8,101 @@ import {
     getPokemonTypes as getPokemonTypesAction,
 } from "@/app/actions/pokemon";
 import { POKE_BALL, QUESTION_MARK } from "@/lib/pokemon-api";
+import PokemonCache from "@/lib/pokemon-cache"; // Import our new cache module
+import { DEFAULT_FEATURED_POKEMON } from "@/lib/pokemon-constants";
+import {
+    extractBestSpriteUrl,
+    formatPokemonId,
+    formatPokemonTypes,
+} from "@/lib/pokemon-utils";
 
-// In-memory cache for images and custom Pokemon data
-const imageCache = new Map();
-const customPokemonNames = new Set();
-
-// Helper functions
-const isCustomId = (id) => {
-    if (!id) return false;
-    if (String(id).includes("?")) return true;
-    const numId = parseInt(id);
-    if (!isNaN(numId) && numId > 2000) return true;
-    return false;
-};
-
-const registerCustomPokemon = (name) => {
-    if (name) {
-        const nameLower = String(name).toLowerCase();
-        if (!customPokemonNames.has(nameLower)) {
-            console.log(`Registering ${name} as a custom Pokemon`);
-            customPokemonNames.add(nameLower);
+/**
+ * API Module
+ * Provides a wrapper for API calls with standardized error handling
+ */
+const PokemonAPI = {
+    // Generic wrapper for API calls with consistent error handling
+    async call(
+        action,
+        params,
+        errorMessage,
+        fallback = null,
+        suppressErrors = false
+    ) {
+        try {
+            return await action(params);
+        } catch (error) {
+            if (!suppressErrors) {
+                console.warn(errorMessage, error.message);
+            }
+            return fallback;
         }
-    }
+    },
 };
 
-// Initialize Pokemon with custom image
+/**
+ * Initialize a custom Pokemon with optional custom image
+ * Returns true if the Pokemon was registered as custom
+ */
 export const initializePokemon = (pokemonData, customImage = null) => {
     if (!pokemonData || !pokemonData.name) return false;
 
-    if (pokemonData.id && isCustomId(pokemonData.id)) {
-        registerCustomPokemon(pokemonData.name);
+    if (pokemonData.id && PokemonCache.isCustomId(pokemonData.id)) {
+        PokemonCache.registerCustom(pokemonData.name);
+
         if (customImage) {
-            const cacheKey = String(pokemonData.name).toLowerCase().trim();
-            imageCache.set(cacheKey, customImage);
+            PokemonCache.cacheImage(pokemonData.name, customImage);
         }
         return true;
     }
     return false;
 };
 
-// Get a single Pokemon using Server Action
+/**
+ * Get a single Pokemon using Server Action
+ * Handles custom Pokemon logic and caching
+ */
 export const getPokemon = async (idOrName, suppressErrors = false) => {
     if (!idOrName) return null;
 
-    const cacheKey = String(idOrName).toLowerCase().trim();
-
-    // Skip for custom Pokemon
-    if (isCustomId(idOrName)) {
+    // Skip database query for custom Pokemon
+    if (PokemonCache.isCustomId(idOrName)) {
         console.log(
             `${idOrName} is a custom Pokemon ID, skipping database query`
         );
-        registerCustomPokemon(idOrName);
+        PokemonCache.registerCustom(idOrName);
         return null;
     }
 
     // Check if this name is already known to be a custom Pokemon
-    if (customPokemonNames.has(cacheKey)) {
+    if (PokemonCache.isCustomName(idOrName)) {
         console.log(
             `${idOrName} is a known custom Pokemon, skipping database query`
         );
         return null;
     }
 
-    try {
-        // Use server action instead of API call
-        const pokemon = await getPokemonAction(idOrName);
+    // Call the server action
+    const pokemon = await PokemonAPI.call(
+        getPokemonAction,
+        idOrName,
+        `Error fetching Pokemon ${idOrName}:`,
+        null,
+        suppressErrors
+    );
 
-        if (!pokemon) {
-            registerCustomPokemon(idOrName);
-        }
-
-        return pokemon;
-    } catch (error) {
-        if (!suppressErrors) {
-            console.warn(`Error fetching Pokemon ${idOrName}:`, error.message);
-        }
-        return null;
+    // Register as custom if not found
+    if (!pokemon) {
+        PokemonCache.registerCustom(idOrName);
     }
+
+    return pokemon;
 };
 
-// Get Pokemon image using database sprites
+/**
+ * Get Pokemon image using database sprites
+ * Handles image caching and fallback logic
+ */
 export const getPokemonImage = async (name, id = null, customImage = null) => {
     // If custom image is provided, return it immediately
     if (customImage) {
@@ -96,32 +111,32 @@ export const getPokemonImage = async (name, id = null, customImage = null) => {
 
     if (!name) return POKE_BALL;
 
-    const cacheKey = String(name).toLowerCase().trim();
-
     // Check cache first
-    if (imageCache.has(cacheKey)) {
-        return imageCache.get(cacheKey);
+    const cachedImage = PokemonCache.getImageFromCache(name);
+    if (cachedImage) {
+        return cachedImage;
     }
 
-    // If we have an ID and it's custom, use question mark immediately
-    if (id && isCustomId(id)) {
-        registerCustomPokemon(name);
-        imageCache.set(cacheKey, QUESTION_MARK);
+    // Helper function to cache and return fallback image
+    const returnDefaultImage = () => {
+        PokemonCache.cacheImage(name, QUESTION_MARK);
         return QUESTION_MARK;
-    }
+    };
 
-    // If this name is already known to be custom, use question mark
-    if (customPokemonNames.has(cacheKey)) {
-        imageCache.set(cacheKey, QUESTION_MARK);
-        return QUESTION_MARK;
+    // Fast-path for known custom Pokemon
+    if (
+        (id && PokemonCache.isCustomId(id)) ||
+        PokemonCache.isCustomName(name)
+    ) {
+        if (id) PokemonCache.registerCustom(name);
+        return returnDefaultImage();
     }
 
     try {
         // First get the Pokemon data to determine the ID
         const pokemonData = await getPokemon(name);
         if (!pokemonData) {
-            imageCache.set(cacheKey, QUESTION_MARK);
-            return QUESTION_MARK;
+            return returnDefaultImage();
         }
 
         // Get Pokemon ID
@@ -129,120 +144,108 @@ export const getPokemonImage = async (name, id = null, customImage = null) => {
         const numId = parseInt(pokemonId.replace(/\D/g, ""));
 
         if (isNaN(numId)) {
-            imageCache.set(cacheKey, QUESTION_MARK);
-            return QUESTION_MARK;
+            return returnDefaultImage();
         }
 
         // Get sprite from database using the server action
-        const spriteUrl = await getPokemonSpriteAction(numId);
+        const spriteUrl = await PokemonAPI.call(
+            getPokemonSpriteAction,
+            numId,
+            `Could not load image for Pokemon ${name}:`,
+            null
+        );
 
         if (spriteUrl) {
-            imageCache.set(cacheKey, spriteUrl);
+            PokemonCache.cacheImage(name, spriteUrl);
             return spriteUrl;
-        } else {
-            // Fallback to question mark if no sprite found
-            imageCache.set(cacheKey, QUESTION_MARK);
-            return QUESTION_MARK;
         }
+
+        return returnDefaultImage();
     } catch (error) {
         console.warn(
             `Could not load image for Pokemon ${name}:`,
             error.message
         );
-        imageCache.set(cacheKey, QUESTION_MARK);
-        return QUESTION_MARK;
-    }
-};
-
-// Get Pokemon list with filtering using Server Action
-export const getPokemonList = async (limit = 20, offset = 0, filters = {}) => {
-    try {
-        // Use server action directly instead of API call
-        return await getPokemonListAction({
-            limit,
-            offset,
-            ...filters,
-        });
-    } catch (error) {
-        console.warn(`Error fetching Pokemon list:`, error.message);
-        return [];
-    }
-};
-
-// Get featured Pokemon using Server Action
-export const getFeaturedPokemon = async (count = 4) => {
-    try {
-        // Use server action directly instead of API call
-        return await getFeaturedPokemonAction(count);
-    } catch (error) {
-        console.warn(`Error fetching featured Pokemon:`, error.message);
-        return [
-            { name: "Bulbasaur", id: "0001" },
-            { name: "Pikachu", id: "0025" },
-            { name: "Charizard", id: "0006" },
-            { name: "Lucario", id: "0448" },
-        ];
-    }
-};
-
-// Get Pokemon types using Server Action
-export const getPokemonTypes = async () => {
-    try {
-        // Use server action directly instead of API call
-        return await getPokemonTypesAction();
-    } catch (error) {
-        console.warn(`Error fetching Pokemon types:`, error.message);
-        return [];
+        return returnDefaultImage();
     }
 };
 
 /**
+ * Get Pokemon list with filtering using Server Action
+ */
+export const getPokemonList = async (limit = 20, offset = 0, filters = {}) => {
+    return PokemonAPI.call(
+        getPokemonListAction,
+        { limit, offset, ...filters },
+        `Error fetching Pokemon list:`,
+        []
+    );
+};
+
+/**
+ * Get featured Pokemon using Server Action
+ */
+export const getFeaturedPokemon = async (count = 4) => {
+    return PokemonAPI.call(
+        getFeaturedPokemonAction,
+        count,
+        `Error fetching featured Pokemon:`,
+        DEFAULT_FEATURED_POKEMON
+    );
+};
+
+/**
+ * Get Pokemon types using Server Action
+ */
+export const getPokemonTypes = async () => {
+    return PokemonAPI.call(
+        getPokemonTypesAction,
+        undefined,
+        `Error fetching Pokemon types:`,
+        []
+    );
+};
+
+/**
  * Consolidated data fetching for explore page with complete Pokémon data
- * This enhanced version prefetches all needed data for Pokémon cards,
- * eliminating the need for separate requests for each card
  */
 export const getExplorePageData = async (params = {}) => {
-    try {
-        return await getExplorePageDataAction({
+    return PokemonAPI.call(
+        getExplorePageDataAction,
+        {
             ...params,
             includeFullData: true, // Always request full data
-        });
-    } catch (error) {
-        console.warn(`Error fetching explore page data:`, error.message);
-        return {
+        },
+        `Error fetching explore page data:`,
+        {
             pokemonList: [],
             pokemonTypes: [],
             featuredPokemon: [],
-        };
-    }
+        }
+    );
 };
 
 /**
  * Consolidated data fetching for home page with complete Pokémon data
  */
 export const getHomePageData = async (params = {}) => {
-    try {
-        return await getHomePageDataAction({
+    return PokemonAPI.call(
+        getHomePageDataAction,
+        {
             ...params,
             includeFullData: true, // Always request full data
-        });
-    } catch (error) {
-        console.warn(`Error fetching home page data:`, error.message);
-        return {
-            featuredPokemon: [
-                { name: "Bulbasaur", id: "0001" },
-                { name: "Pikachu", id: "0025" },
-                { name: "Charizard", id: "0006" },
-                { name: "Lucario", id: "0448" },
-            ],
+        },
+        `Error fetching home page data:`,
+        {
+            featuredPokemon: DEFAULT_FEATURED_POKEMON,
             pokemonTypes: [],
-        };
-    }
+        }
+    );
 };
 
-// Clear cache (unchanged)
+/**
+ * Clear all Pokemon caches
+ */
 export const clearCache = () => {
-    imageCache.clear();
-    customPokemonNames.clear();
-    console.log("Pokemon cache cleared");
+    PokemonCache.clearAll();
 };
