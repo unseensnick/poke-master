@@ -5,14 +5,14 @@ import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
 /**
- * A reusable loading spinner component with animation
+ * Shows an animated loading spinner
  *
  * @param {Object} props - Component props
- * @param {string} props.size - Size of the spinner (sm, md, lg, xl)
+ * @param {string} props.size - Size (xs, sm, md, lg, xl)
  * @param {string} props.className - Additional CSS classes
- * @param {string} props.color - Color variant (primary, secondary, muted)
- * @param {boolean} props.center - Whether to center the spinner in its container
- * @returns {JSX.Element} The rendered loading spinner
+ * @param {string} props.color - Color (primary, secondary, muted)
+ * @param {boolean} props.center - Whether to center in container
+ * @returns {JSX.Element} Rendered spinner
  */
 export function LoadingSpinner({
     size = "md",
@@ -20,7 +20,7 @@ export function LoadingSpinner({
     color = "primary",
     center = false,
 }) {
-    // Size classes mapping
+    // Define size classes for different spinner sizes
     const sizeClasses = {
         xs: "size-4",
         sm: "size-6",
@@ -29,7 +29,7 @@ export function LoadingSpinner({
         xl: "size-24",
     };
 
-    // Color classes mapping
+    // Define color classes
     const colorClasses = {
         primary: "border-primary",
         secondary: "border-secondary",
@@ -37,7 +37,7 @@ export function LoadingSpinner({
         card: "border-card-foreground/50",
     };
 
-    // Center classes if needed
+    // Add centering classes if needed
     const centerClasses = center ? "flex justify-center items-center" : "";
 
     return (
@@ -56,13 +56,13 @@ export function LoadingSpinner({
 }
 
 /**
- * A full-page loading spinner with background overlay
+ * Shows a full-screen loading spinner with background
  *
  * @param {Object} props - Component props
- * @param {string} props.size - Size of the spinner
- * @param {string} props.color - Color variant
+ * @param {string} props.size - Size of spinner
+ * @param {string} props.color - Color of spinner
  * @param {string} props.className - Additional CSS classes
- * @returns {JSX.Element} The rendered full-page loading spinner
+ * @returns {JSX.Element} Rendered full-page spinner
  */
 export function FullPageSpinner({
     size = "lg",
@@ -82,12 +82,12 @@ export function FullPageSpinner({
 }
 
 /**
- * A skeleton loader with animated pulse effect
+ * Shows a gray placeholder box while content loads
  *
  * @param {Object} props - Component props
  * @param {string} props.className - Additional CSS classes
- * @param {React.ReactNode} props.children - Optional content to render inside the skeleton
- * @returns {JSX.Element} The rendered skeleton
+ * @param {React.ReactNode} props.children - Optional content
+ * @returns {JSX.Element} Rendered skeleton
  */
 export function Skeleton({ className, children }) {
     return (

@@ -1,34 +1,33 @@
 /**
- * Shared animation variants for consistent motion throughout the application
- * These can be imported and used with Framer Motion components
+ * Shared animation settings for use with Framer Motion
  */
 
 /**
- * Fade animations for elements entering and exiting the DOM
+ * Fade animations for elements
  */
 export const fadeVariants = {
-    // Basic fade with configurable duration
+    // Basic fade in/out
     standard: {
         hidden: { opacity: 0 },
         visible: { opacity: 1, transition: { duration: 0.4 } },
         exit: { opacity: 0, transition: { duration: 0.3 } },
     },
 
-    // Fade with slight upward movement
+    // Fade with upward movement
     fadeUp: {
         hidden: { opacity: 0, y: 20 },
         visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
         exit: { opacity: 0, y: -10, transition: { duration: 0.3 } },
     },
 
-    // Fade with slight downward movement
+    // Fade with downward movement
     fadeDown: {
         hidden: { opacity: 0, y: -20 },
         visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
         exit: { opacity: 0, y: 10, transition: { duration: 0.3 } },
     },
 
-    // Fade with scale effect
+    // Fade with scaling effect
     fadeScale: {
         hidden: { opacity: 0, scale: 0.95 },
         visible: { opacity: 1, scale: 1, transition: { duration: 0.4 } },
@@ -37,10 +36,10 @@ export const fadeVariants = {
 };
 
 /**
- * Container animations for staggered children
+ * Container animations with staggered children
  */
 export const containerVariants = {
-    // Standard container animation with staggered children
+    // Standard staggered animation
     standard: {
         hidden: { opacity: 0 },
         show: {
@@ -53,7 +52,7 @@ export const containerVariants = {
         exit: { opacity: 0 },
     },
 
-    // Grid container for card layouts
+    // Grid layout with faster stagger
     grid: {
         hidden: { opacity: 0 },
         show: {
@@ -68,10 +67,10 @@ export const containerVariants = {
 };
 
 /**
- * Item animations for children of container elements
+ * Item animations for children of containers
  */
 export const itemVariants = {
-    // Standard item animation with spring physics
+    // Standard item with spring physics
     standard: {
         hidden: { opacity: 0, y: 20 },
         show: {
@@ -86,7 +85,7 @@ export const itemVariants = {
         exit: { opacity: 0, y: 10, transition: { duration: 0.2 } },
     },
 
-    // Card animation with subtle scale effect
+    // Card animation with scale effect
     card: {
         hidden: { opacity: 0, y: 20, scale: 0.95 },
         show: {
@@ -107,13 +106,13 @@ export const itemVariants = {
  * Hover animations for interactive elements
  */
 export const hoverVariants = {
-    // Subtle scale increase
+    // Simple scale effect
     scale: {
         initial: { scale: 1 },
         hover: { scale: 1.05, transition: { duration: 0.2 } },
     },
 
-    // Lift effect
+    // Subtle lift effect
     lift: {
         initial: { y: 0 },
         hover: { y: -5, transition: { duration: 0.2 } },
@@ -129,7 +128,7 @@ export const hoverVariants = {
         },
     },
 
-    // Emphasized effect for buttons or calls to action
+    // Emphasis effect with shadow
     emphasis: {
         initial: {
             y: 0,
@@ -147,10 +146,10 @@ export const hoverVariants = {
 };
 
 /**
- * Pokemon Card specific animations
+ * Pokemon card animations
  */
 export const pokemonCardVariants = {
-    // Container for the whole card
+    // Container for whole card
     container: {
         exit: {
             opacity: 0,
@@ -171,7 +170,7 @@ export const pokemonCardVariants = {
             boxShadow: "0px 0px 0px rgba(0,0,0,0)",
         },
         hover: {
-            y: -8, // Move up 8px
+            y: -8,
             boxShadow: "0px 10px 15px rgba(0,0,0,0.2)",
             transition: {
                 duration: 0.3,
@@ -188,7 +187,7 @@ export const pokemonCardVariants = {
         },
         hover: {
             scale: 1.05,
-            rotate: [0, -1, 1, -1, 1, 0], // Sequence creates wiggle effect
+            rotate: [0, -1, 1, -1, 1, 0], // Creates wiggle effect
             transition: {
                 scale: { duration: 0.2 },
                 rotate: {
@@ -218,19 +217,19 @@ export const pokemonCardVariants = {
         hover: { opacity: 1, transition: { duration: 0.4 } },
     },
 
-    // Stats animation - fixed to work with custom property instead of function call
+    // Stats animation
     stats: {
         initial: { y: 0 },
         hover: {
             y: -3,
             transition: {
                 duration: 0.2,
-                // Delay will come from custom prop in Framer Motion
+                // Delay comes from custom prop
             },
         },
     },
 
-    // Type badge animation - fixed to work with custom property instead of function call
+    // Type badge animation
     typeBadge: {
         initial: { y: 0, scale: 1 },
         hover: {
@@ -238,7 +237,7 @@ export const pokemonCardVariants = {
             scale: 1.05,
             transition: {
                 duration: 0.2,
-                // Delay will be calculated based on index via custom prop
+                // Delay calculated from index via custom prop
             },
         },
     },
@@ -340,7 +339,7 @@ export const modalVariants = {
 };
 
 /**
- * Filter and search component animations
+ * Filter and search animations
  */
 export const filterVariants = {
     container: {
@@ -366,7 +365,7 @@ export const filterVariants = {
 };
 
 /**
- * List animations for search results or dynamic content
+ * List animations for search results
  */
 export const listVariants = {
     container: {

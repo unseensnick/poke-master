@@ -1,30 +1,23 @@
 /**
- * Pokemon styling utilities for consistent visual theming across components
- *
- * This module provides helper functions to apply type-based styling throughout the app,
- * ensuring a consistent look and making it easier to style Pokemon-related UI elements.
- * All utilities are compatible with Tailwind CSS v4's "rgb() from" syntax.
+ * Pokemon styling utilities for consistent visual theming
  */
 
 /**
- * Converts a Pokemon type name to its CSS color variable
+ * Gets the CSS variable for a Pokemon type's color
  *
- * @param {string} type - Pokemon type (like "water", "fire", etc.)
- * @returns {string} CSS variable reference (e.g., "var(--color-pokemon-water)")
+ * @param {string} type - Pokemon type (like "water", "fire")
+ * @returns {string} CSS variable for the type color
  */
 export const getTypeColor = (type) => {
     return `var(--color-pokemon-${type?.toLowerCase() || "normal"})`;
 };
 
 /**
- * Adds transparency to a color using the appropriate Tailwind v4 syntax
+ * Adds transparency to a color
  *
- * This is useful for creating semi-transparent versions of type colors
- * without having to define new CSS variables for each opacity level.
- *
- * @param {string} color - Color value (can be CSS variable or direct rgb value)
- * @param {number} opacity - Transparency level (0=transparent, 1=solid)
- * @returns {string} Color with opacity applied in the correct format
+ * @param {string} color - Color value or CSS variable
+ * @param {number} opacity - Transparency level (0-1)
+ * @returns {string} Color with opacity applied
  */
 export const getColorWithOpacity = (color, opacity) => {
     if (typeof color === "string" && color.startsWith("var")) {
@@ -37,13 +30,10 @@ export const getColorWithOpacity = (color, opacity) => {
 };
 
 /**
- * Creates styles for type badges with appropriate colors and readability enhancements
- *
- * The text shadow improves readability, especially for lighter type colors
- * where white text might be harder to read without contrast enhancement.
+ * Creates style object for Pokemon type badges
  *
  * @param {string} type - Pokemon type name
- * @returns {object} Style object with background color, text color and text shadow
+ * @returns {object} Style object with background color and text styles
  */
 export const getTypeStyle = (type) => {
     const typeLower = type?.toLowerCase() || "normal";
@@ -55,11 +45,11 @@ export const getTypeStyle = (type) => {
 };
 
 /**
- * Extracts and normalizes type information from Pokemon data
+ * Gets type information from Pokemon data
  *
  * @param {Object} pokemonData - Pokemon data object
  * @param {number|null} typeCount - Optional override for number of types
- * @returns {Object} Object with effectiveTypeCount and type names
+ * @returns {Object} Type count and type names
  */
 export const extractTypeInfo = (pokemonData, typeCount = null) => {
     const effectiveTypeCount = pokemonData
@@ -82,16 +72,11 @@ export const extractTypeInfo = (pokemonData, typeCount = null) => {
 };
 
 /**
- * Creates background gradient styles based on Pokemon's type(s)
+ * Creates background gradient based on Pokemon types
  *
- * Different gradients are generated based on how many types the Pokemon has:
- * - Single type: subtle gradient of the same color
- * - Two types: gradient transitioning between both type colors
- * - Three types: three-color gradient with middle transition point
- *
- * @param {number} typeCount - Number of types to use (1-3)
+ * @param {number} typeCount - Number of types (1-3)
  * @param {string[]} types - Array of Pokemon type names
- * @returns {object} Style object with appropriate background gradient
+ * @returns {object} Style object with background gradient
  */
 export const getBackgroundStyle = (typeCount, types = []) => {
     const typeColors = types.map((type) => type?.toLowerCase() || "normal");
@@ -110,7 +95,7 @@ export const getBackgroundStyle = (typeCount, types = []) => {
             background: `linear-gradient(170deg, rgb(from var(--color-pokemon-${type1}) r g b / 0.15) 0%, rgb(from var(--color-pokemon-${type2}) r g b / 0.15) 100%)`,
         };
     } else if (typeCount >= 3) {
-        // Three or more types gradient
+        // Three types gradient
         const type1 = typeColors[0] || "normal";
         const type2 = typeColors[1] || type1;
         const type3 = typeColors[2] || type2;
@@ -126,16 +111,11 @@ export const getBackgroundStyle = (typeCount, types = []) => {
 };
 
 /**
- * Creates border gradient styles based on Pokemon's type(s)
+ * Creates border gradient based on Pokemon types
  *
- * Similar to background gradients, but specifically for card borders:
- * - Single type: gradient from full color to semi-transparent
- * - Two types: gradient transitioning between both type colors
- * - Three types: more complex gradient with color stops for a smoother blend
- *
- * @param {number} typeCount - Number of types to use (1-3)
+ * @param {number} typeCount - Number of types (1-3)
  * @param {string[]} types - Array of Pokemon type names
- * @returns {object} Style object with border gradient definition
+ * @returns {object} Style object for border gradient
  */
 export const getBorderStyle = (typeCount, types = []) => {
     const typeColors = types.map((type) => type?.toLowerCase() || "normal");
@@ -154,7 +134,7 @@ export const getBorderStyle = (typeCount, types = []) => {
             background: `linear-gradient(to bottom right, var(--color-pokemon-${type1}), var(--color-pokemon-${type2})) border-box`,
         };
     } else if (typeCount >= 3) {
-        // Three or more types border
+        // Three types border
         const type1 = typeColors[0] || "normal";
         const type2 = typeColors[1] || type1;
         const type3 = typeColors[2] || type2;
@@ -170,13 +150,10 @@ export const getBorderStyle = (typeCount, types = []) => {
 };
 
 /**
- * Selects an appropriate text color based on a Pokemon type's brightness
- *
- * Some Pokemon types have lighter colors (like Electric or Normal) which need
- * dark text for readability, while most types work better with white text.
+ * Gets text color based on Pokemon type's brightness
  *
  * @param {string} type - Pokemon type name
- * @returns {object} Style object with text color and shadow for optimal contrast
+ * @returns {object} Style with text color and shadow
  */
 export const getContrastTextColor = (type) => {
     // Types with light backgrounds need dark text
@@ -192,11 +169,11 @@ export const getContrastTextColor = (type) => {
 };
 
 /**
- * Generates top-left corner accent style for Pokemon card
+ * Creates top-left corner style for Pokemon card
  *
- * @param {number} effectiveTypeCount - Number of types to consider
+ * @param {number} effectiveTypeCount - Number of types
  * @param {string} primaryType - Primary Pokemon type
- * @returns {Object} Style object for top-left corner accent
+ * @returns {Object} Style for top-left corner
  */
 export const getTopLeftAccentStyle = (effectiveTypeCount, primaryType) => {
     return {
@@ -215,13 +192,13 @@ export const getTopLeftAccentStyle = (effectiveTypeCount, primaryType) => {
 };
 
 /**
- * Generates bottom-right corner accent style for Pokemon card
+ * Creates bottom-right corner style for Pokemon card
  *
- * @param {number} effectiveTypeCount - Number of types to consider
+ * @param {number} effectiveTypeCount - Number of types
  * @param {string} primaryType - Primary Pokemon type
  * @param {string} secondaryType - Secondary Pokemon type
  * @param {string} tertiaryType - Tertiary Pokemon type
- * @returns {Object} Style object for bottom-right corner accent
+ * @returns {Object} Style for bottom-right corner
  */
 export const getBottomRightAccentStyle = (
     effectiveTypeCount,
@@ -245,10 +222,10 @@ export const getBottomRightAccentStyle = (
 };
 
 /**
- * Generates left side accent style for triple-type Pokemon
+ * Creates left side style for triple-type Pokemon
  *
  * @param {string} secondaryType - Secondary Pokemon type
- * @returns {Object} Style object for left side accent
+ * @returns {Object} Style for left side
  */
 export const getLeftSideAccentStyle = (secondaryType) => {
     return {
@@ -263,10 +240,10 @@ export const getLeftSideAccentStyle = (secondaryType) => {
 };
 
 /**
- * Generates right side accent style for triple-type Pokemon
+ * Creates right side style for triple-type Pokemon
  *
  * @param {string} secondaryType - Secondary Pokemon type
- * @returns {Object} Style object for right side accent
+ * @returns {Object} Style for right side
  */
 export const getRightSideAccentStyle = (secondaryType) => {
     return {
@@ -281,10 +258,10 @@ export const getRightSideAccentStyle = (secondaryType) => {
 };
 
 /**
- * Generates image glow effect style for hover state
+ * Creates image glow effect for hover state
  *
  * @param {string} primaryType - Primary Pokemon type
- * @returns {Object} Style object for image glow effect
+ * @returns {Object} Style for image glow effect
  */
 export const getImageGlowStyle = (primaryType) => {
     return {

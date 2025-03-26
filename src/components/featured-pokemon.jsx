@@ -7,18 +7,30 @@ import {
 } from "@/services/pokemon-service";
 import { useEffect, useState } from "react";
 
+/**
+ * Displays a grid of featured Pokemon
+ *
+ * @param {Object} props - Component props
+ * @param {Array} props.initialPokemon - Pre-loaded Pokemon data
+ * @param {number} props.maxDisplay - Maximum number to show
+ * @param {string} props.title - Section title
+ * @param {string} props.desc - Section description
+ * @returns {JSX.Element} Featured Pokemon section
+ */
 export function FeaturedPokemon({
     initialPokemon = [],
     maxDisplay = 4,
     title = "Featured Pokémon",
     desc = "Check out some of the most popular Pokémon in our database!",
 }) {
+    // State for Pokemon data and loading state
     const [featuredPokemon, setFeaturedPokemon] = useState(initialPokemon);
     const [isLoading, setIsLoading] = useState(initialPokemon.length === 0);
     const [hasFetched, setHasFetched] = useState(initialPokemon.length > 0);
 
+    // Load featured Pokemon if not provided
     useEffect(() => {
-        // Skip if we already have Pokemon from props or if we've already fetched
+        // Skip if we already have Pokemon or already fetched
         if (hasFetched) {
             return;
         }
@@ -26,7 +38,7 @@ export function FeaturedPokemon({
         async function loadFeaturedPokemon() {
             setIsLoading(true);
             try {
-                // Use consolidated data fetching that includes sprite URLs
+                // Try to get complete data from home page data
                 const data = await getHomePageData({
                     featuredCount: maxDisplay,
                     includeFullData: true,
@@ -34,7 +46,23 @@ export function FeaturedPokemon({
 
                 setFeaturedPokemon(data.featuredPokemon);
             } catch (error) {
-                console.error("Error loading featured Pokemon:", error);
+                console.error(
+                    "Error loading featured Pokemon from home data:",
+                    error
+                );
+
+                // Fall back to direct featured Pokemon API if home data fails
+                try {
+                    const fallbackPokemon = await getFeaturedPokemon(
+                        maxDisplay
+                    );
+                    setFeaturedPokemon(fallbackPokemon);
+                } catch (fallbackError) {
+                    console.error(
+                        "Error loading fallback featured Pokemon:",
+                        fallbackError
+                    );
+                }
             } finally {
                 setIsLoading(false);
                 setHasFetched(true);
@@ -57,20 +85,20 @@ export function FeaturedPokemon({
                     {desc}
                 </p>
 
-                {/* Pokemon cards - Using grid for 4 columns */}
+                {/* Pokemon cards grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 justify-items-center">
                     {isLoading
-                        ? // Show loading placeholders
+                        ? // Loading placeholders
                           Array.from({ length: maxDisplay }).map((_, index) => (
                               <div key={`loading-${index}`}>
                                   <PokemonCard pokemonIdOrName={null} />
                               </div>
                           ))
-                        : // Show actual Pokemon cards with preloaded data
+                        : // Actual Pokemon cards
                           featuredPokemon.map((pokemon) => (
                               <PokemonCard
                                   key={pokemon.id || pokemon.name}
-                                  preloadedData={pokemon} // Pass preloaded data with sprite URL
+                                  preloadedData={pokemon} // Pass data with sprite URL
                               />
                           ))}
                 </div>

@@ -1,9 +1,10 @@
 /**
- * Shared Pokémon constants for use across the application
- * Centralizing these values prevents duplication and ensures consistency
+ * Shared Pokemon constants used across the application
  */
 
-// Pokémon generations data
+/**
+ * Generation data with game information and ID ranges
+ */
 export const GENERATIONS = [
     {
         id: 1,
@@ -46,7 +47,9 @@ export const GENERATIONS = [
     },
 ];
 
-// Pokémon games data (simplified to main series)
+/**
+ * Main Pokemon games by generation
+ */
 export const GAMES = [
     { id: "red-blue", name: "Red & Blue", generation: 1 },
     { id: "yellow", name: "Yellow", generation: 1 },
@@ -91,7 +94,9 @@ export const GAMES = [
     { id: "scarlet-violet", name: "Scarlet & Violet", generation: 9 },
 ];
 
-// Sort options for Pokémon lists
+/**
+ * Sort options for Pokemon lists
+ */
 export const SORT_OPTIONS = [
     { value: "id-asc", label: "ID (Ascending)" },
     { value: "id-desc", label: "ID (Descending)" },
@@ -100,8 +105,7 @@ export const SORT_OPTIONS = [
 ];
 
 /**
- * Default featured Pokémon for fallback when API calls fail
- * Used across both client and server-side code
+ * Default featured Pokemon for fallback when API calls fail
  */
 export const DEFAULT_FEATURED_POKEMON = [
     { name: "Bulbasaur", id: "0001" },

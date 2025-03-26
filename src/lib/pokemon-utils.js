@@ -1,26 +1,17 @@
 /**
  * Shared utilities for Pokemon data processing
- * Contains reusable functions for both client and server-side code
  */
 
 /**
- * Extracts the best available sprite URL from a Pokemon's sprites object
- *
- * This function handles the complex structure of sprite data that can vary
- * between different Pokemon API responses. It attempts to find the highest
- * quality sprite using a priority-based approach:
- * 1. Official artwork (preferred)
- * 2. Default sprite
- * 3. Any URL containing "official"
- * 4. Any valid sprite URL as a last resort
+ * Gets the best available sprite URL from a Pokemon's sprites object
  *
  * @param {Object} sprites - The sprites object from Pokemon data
- * @returns {string|null} - The best available sprite URL or null if none found
+ * @returns {string|null} - Best available sprite URL or null if none found
  */
 export function extractBestSpriteUrl(sprites) {
     if (!sprites) return null;
 
-    // Try various sprite paths based on the structure
+    // Try official artwork first (highest quality)
     if (sprites.official && typeof sprites.official === "string") {
         return sprites.official;
     }
@@ -29,6 +20,7 @@ export function extractBestSpriteUrl(sprites) {
         return sprites.official["official_artwork"];
     }
 
+    // Try default sprite next
     if (sprites.default && typeof sprites.default === "string") {
         return sprites.default;
     }
@@ -40,7 +32,7 @@ export function extractBestSpriteUrl(sprites) {
         return sprites["official-artwork"].front_default;
     }
 
-    // Check for any key with "official" in it
+    // Look for any key with "official" in it
     const spriteKeys = Object.keys(sprites);
     for (const key of spriteKeys) {
         if (key.includes("official")) {
@@ -48,7 +40,7 @@ export function extractBestSpriteUrl(sprites) {
         }
     }
 
-    // Last resort, look for any URL
+    // Last resort - any valid URL
     for (const key of spriteKeys) {
         const value = sprites[key];
         if (typeof value === "string" && value.startsWith("http")) {
@@ -60,22 +52,21 @@ export function extractBestSpriteUrl(sprites) {
 }
 
 /**
- * Formats a Pokemon ID to a padded string with leading zeros
+ * Adds leading zeros to Pokemon ID
  *
- * @param {number|string} id - The Pokemon ID to format
- * @param {number} padLength - The length to pad to (default: 4)
- * @returns {string} - The formatted ID string (e.g., "0025" for Pikachu)
+ * @param {number|string} id - Pokemon ID to format
+ * @param {number} padLength - Number of digits (default: 4)
+ * @returns {string} - Formatted ID (e.g., "0025" for Pikachu)
  */
 export function formatPokemonId(id, padLength = 4) {
     return String(id).padStart(padLength, "0");
 }
 
 /**
- * Capitalizes the first letter of a string
- * Used for formatting Pokemon types and names
+ * Makes the first letter uppercase
  *
- * @param {string} str - The string to capitalize
- * @returns {string} - The capitalized string
+ * @param {string} str - String to capitalize
+ * @returns {string} - Capitalized string
  */
 export function capitalizeFirstLetter(str) {
     if (!str) return "";
@@ -83,16 +74,16 @@ export function capitalizeFirstLetter(str) {
 }
 
 /**
- * Formats type names from a Pokemon's types array
+ * Formats Pokemon types to have capitalized names
  *
- * @param {Array} types - Array of type strings or objects with name property
+ * @param {Array} types - Array of type objects or strings
  * @returns {Array} - Array of capitalized type names
  */
 export function formatPokemonTypes(types) {
     if (!types || !Array.isArray(types)) return [];
 
     return types.map((type) => {
-        // Handle both string types and object types (with name property)
+        // Handle both string types and object types
         const typeName =
             typeof type === "string"
                 ? type

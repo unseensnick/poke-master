@@ -5,15 +5,15 @@ import { cn } from "@/lib/utils";
 import { AlertCircle, AlertTriangle, RefreshCw } from "lucide-react";
 
 /**
- * A reusable error message component that can include actions
+ * Shows an error message with optional action button
  *
  * @param {Object} props - Component props
- * @param {string} props.message - The error message to display
- * @param {React.ReactNode} props.action - Optional action button or component
+ * @param {string} props.message - Error message to display
+ * @param {React.ReactNode} props.action - Action button or component
  * @param {string} props.className - Additional CSS classes
- * @param {string} props.variant - Error variant (warning, error, info)
- * @param {Function} props.onRetry - Optional retry callback function
- * @returns {JSX.Element} The rendered error message
+ * @param {string} props.variant - Type of alert (warning, error, info)
+ * @param {Function} props.onRetry - Function to call when retrying
+ * @returns {JSX.Element} Rendered error message
  */
 export function ErrorMessage({
     message = "An error occurred",
@@ -22,38 +22,35 @@ export function ErrorMessage({
     variant = "error",
     onRetry,
 }) {
-    // Icon mapping based on variant
+    // Map variants to their respective icons
     const IconMap = {
         warning: AlertTriangle,
         error: AlertCircle,
         info: AlertCircle,
     };
 
-    // Get the appropriate icon
     const Icon = IconMap[variant] || IconMap.error;
 
-    // Background color mapping
+    // Define colors for different variants
     const bgColors = {
         warning: "bg-yellow-500/10",
         error: "bg-destructive/10",
         info: "bg-blue-500/10",
     };
 
-    // Text color mapping
     const textColors = {
         warning: "text-yellow-600 dark:text-yellow-400",
         error: "text-destructive dark:text-destructive",
         info: "text-blue-600 dark:text-blue-400",
     };
 
-    // Icon color mapping
     const iconColors = {
         warning: "text-yellow-500",
         error: "text-destructive",
         info: "text-blue-500",
     };
 
-    // Render the retry button if onRetry is provided
+    // Create retry button if onRetry function was provided
     const retryButton = onRetry ? (
         <Button
             variant="outline"
@@ -99,23 +96,22 @@ export function ErrorMessage({
 }
 
 /**
- * A smaller, inline error message component
+ * Shows a small inline error message
  *
  * @param {Object} props - Component props
- * @param {string} props.message - The error message to display
+ * @param {string} props.message - Error message to display
  * @param {string} props.className - Additional CSS classes
- * @param {string} props.variant - Error variant (warning, error, info)
- * @returns {JSX.Element} The rendered inline error message
+ * @param {string} props.variant - Type of alert (warning, error, info)
+ * @returns {JSX.Element} Rendered inline error message
  */
 export function InlineError({ message, className = "", variant = "error" }) {
-    // Icon mapping based on variant
+    // Map variants to their respective icons
     const IconMap = {
         warning: AlertTriangle,
         error: AlertCircle,
         info: AlertCircle,
     };
 
-    // Get the appropriate icon
     const Icon = IconMap[variant] || IconMap.error;
 
     // Text color mapping

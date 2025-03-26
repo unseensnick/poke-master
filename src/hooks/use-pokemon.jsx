@@ -7,17 +7,14 @@ import {
 import { useEffect, useState } from "react";
 
 /**
- * Custom hook to fetch and manage Pokémon data
+ * Hook to load and manage Pokemon data
  *
- * This hook handles all data fetching, state management, and loading states
- * for Pokémon data, centralizing this logic for reuse across components.
- *
- * @param {Object} options - Hook configuration options
- * @param {Object} options.pokemon - Optional pre-loaded Pokémon data
- * @param {string|number} options.pokemonIdOrName - Pokémon ID or name to fetch
- * @param {Object} options.preloadedData - Optional complete preloaded data
- * @param {string} options.customImage - Optional custom image URL
- * @returns {Object} Pokémon data and loading states
+ * @param {Object} options - Configuration options
+ * @param {Object} options.pokemon - Pre-loaded Pokemon data
+ * @param {string|number} options.pokemonIdOrName - ID or name to fetch
+ * @param {Object} options.preloadedData - Complete preloaded data
+ * @param {string} options.customImage - Custom image URL
+ * @returns {Object} Pokemon data, image URL and loading states
  */
 export function usePokemon({
     pokemon = null,
@@ -46,7 +43,7 @@ export function usePokemon({
     // Track image source
     const [imageSource, setImageSource] = useState(customImage);
 
-    // Generate a unique key for the Pokémon
+    // Create unique key for the Pokemon card
     const [cardKey, setCardKey] = useState(() => {
         if (pokemon) {
             initializePokemon(pokemon, customImage);
@@ -60,9 +57,7 @@ export function usePokemon({
         );
     });
 
-    /**
-     * Update state when inputs change
-     */
+    // Update state when inputs change
     useEffect(() => {
         const newKey =
             preloadedData?.id ||
@@ -89,9 +84,7 @@ export function usePokemon({
         }
     }, [pokemon, pokemonIdOrName, customImage, preloadedData]);
 
-    /**
-     * Fetch Pokémon data
-     */
+    // Fetch Pokémon data
     useEffect(() => {
         if (pokemon || preloadedData) {
             setPokemonData(pokemon || preloadedData);
@@ -126,9 +119,7 @@ export function usePokemon({
         loadPokemonData();
     }, [pokemon, pokemonIdOrName, preloadedData, customImage]);
 
-    /**
-     * Fetch Pokémon image
-     */
+    // Fetch Pokémon image
     useEffect(() => {
         if (!pokemonData) {
             setIsLoadingImage(false);

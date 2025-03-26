@@ -8,7 +8,7 @@ import {
     getPokemonTypes as getPokemonTypesAction,
 } from "@/app/actions/pokemon";
 import { POKE_BALL, QUESTION_MARK } from "@/lib/pokemon-api";
-import PokemonCache from "@/lib/pokemon-cache"; // Import our new cache module
+import PokemonCache from "@/lib/pokemon-cache";
 import { DEFAULT_FEATURED_POKEMON } from "@/lib/pokemon-constants";
 import {
     extractBestSpriteUrl,
@@ -17,11 +17,10 @@ import {
 } from "@/lib/pokemon-utils";
 
 /**
- * API Module
- * Provides a wrapper for API calls with standardized error handling
+ * API wrapper with consistent error handling
  */
 const PokemonAPI = {
-    // Generic wrapper for API calls with consistent error handling
+    // Generic wrapper for API calls with error handling
     async call(
         action,
         params,
@@ -41,8 +40,11 @@ const PokemonAPI = {
 };
 
 /**
- * Initialize a custom Pokemon with optional custom image
- * Returns true if the Pokemon was registered as custom
+ * Registers a custom Pokemon with optional image
+ *
+ * @param {Object} pokemonData - Pokemon data
+ * @param {string} customImage - Optional custom image URL
+ * @returns {boolean} Whether Pokemon was registered
  */
 export const initializePokemon = (pokemonData, customImage = null) => {
     if (!pokemonData || !pokemonData.name) return false;
@@ -59,8 +61,11 @@ export const initializePokemon = (pokemonData, customImage = null) => {
 };
 
 /**
- * Get a single Pokemon using Server Action
- * Handles custom Pokemon logic and caching
+ * Gets a single Pokemon by name or ID
+ *
+ * @param {string|number} idOrName - Pokemon ID or name
+ * @param {boolean} suppressErrors - Whether to hide error messages
+ * @returns {Object|null} Pokemon data or null if not found
  */
 export const getPokemon = async (idOrName, suppressErrors = false) => {
     if (!idOrName) return null;
@@ -74,7 +79,7 @@ export const getPokemon = async (idOrName, suppressErrors = false) => {
         return null;
     }
 
-    // Check if this name is already known to be a custom Pokemon
+    // Check if already known to be custom
     if (PokemonCache.isCustomName(idOrName)) {
         console.log(
             `${idOrName} is a known custom Pokemon, skipping database query`
@@ -82,7 +87,7 @@ export const getPokemon = async (idOrName, suppressErrors = false) => {
         return null;
     }
 
-    // Call the server action
+    // Get the Pokemon data
     const pokemon = await PokemonAPI.call(
         getPokemonAction,
         idOrName,
@@ -94,17 +99,29 @@ export const getPokemon = async (idOrName, suppressErrors = false) => {
     // Register as custom if not found
     if (!pokemon) {
         PokemonCache.registerCustom(idOrName);
+        return null;
     }
 
-    return pokemon;
+    // Format the Pokemon data for consistent structure
+    return {
+        id: formatPokemonId(pokemon.id),
+        name: pokemon.name,
+        weight: pokemon.weight.toFixed(1),
+        height: pokemon.height.toFixed(1),
+        types: formatPokemonTypes(pokemon.types),
+    };
 };
 
 /**
- * Get Pokemon image using database sprites
- * Handles image caching and fallback logic
+ * Gets a Pokemon's image
+ *
+ * @param {string} name - Pokemon name
+ * @param {string|number} id - Pokemon ID
+ * @param {string} customImage - Custom image URL
+ * @returns {string} Image URL
  */
 export const getPokemonImage = async (name, id = null, customImage = null) => {
-    // If custom image is provided, return it immediately
+    // Return custom image if provided
     if (customImage) {
         return customImage;
     }
@@ -117,7 +134,7 @@ export const getPokemonImage = async (name, id = null, customImage = null) => {
         return cachedImage;
     }
 
-    // Helper function to cache and return fallback image
+    // Helper to cache and return default image
     const returnDefaultImage = () => {
         PokemonCache.cacheImage(name, QUESTION_MARK);
         return QUESTION_MARK;
@@ -147,17 +164,21 @@ export const getPokemonImage = async (name, id = null, customImage = null) => {
             return returnDefaultImage();
         }
 
-        // Get sprite from database using the server action
-        const spriteUrl = await PokemonAPI.call(
+        // Get sprite from database
+        const pokemonWithSprites = await PokemonAPI.call(
             getPokemonSpriteAction,
             numId,
             `Could not load image for Pokemon ${name}:`,
             null
         );
 
-        if (spriteUrl) {
-            PokemonCache.cacheImage(name, spriteUrl);
-            return spriteUrl;
+        if (pokemonWithSprites && pokemonWithSprites.sprites) {
+            // Extract the best available sprite URL
+            const spriteUrl = extractBestSpriteUrl(pokemonWithSprites.sprites);
+            if (spriteUrl) {
+                PokemonCache.cacheImage(name, spriteUrl);
+                return spriteUrl;
+            }
         }
 
         return returnDefaultImage();
@@ -171,7 +192,12 @@ export const getPokemonImage = async (name, id = null, customImage = null) => {
 };
 
 /**
- * Get Pokemon list with filtering using Server Action
+ * Gets a list of Pokemon with optional filtering
+ *
+ * @param {number} limit - Max number of results
+ * @param {number} offset - Starting position
+ * @param {Object} filters - Filter criteria
+ * @returns {Array} List of Pokemon
  */
 export const getPokemonList = async (limit = 20, offset = 0, filters = {}) => {
     return PokemonAPI.call(
@@ -183,7 +209,10 @@ export const getPokemonList = async (limit = 20, offset = 0, filters = {}) => {
 };
 
 /**
- * Get featured Pokemon using Server Action
+ * Gets featured Pokemon
+ *
+ * @param {number} count - Number of Pokemon to get
+ * @returns {Array} Featured Pokemon
  */
 export const getFeaturedPokemon = async (count = 4) => {
     return PokemonAPI.call(
@@ -195,7 +224,9 @@ export const getFeaturedPokemon = async (count = 4) => {
 };
 
 /**
- * Get Pokemon types using Server Action
+ * Gets all Pokemon types
+ *
+ * @returns {Array} List of Pokemon types
  */
 export const getPokemonTypes = async () => {
     return PokemonAPI.call(
@@ -207,7 +238,10 @@ export const getPokemonTypes = async () => {
 };
 
 /**
- * Consolidated data fetching for explore page with complete Pokémon data
+ * Gets complete data for explore page
+ *
+ * @param {Object} params - Query parameters
+ * @returns {Object} Pokemon list, types, and featured Pokemon
  */
 export const getExplorePageData = async (params = {}) => {
     return PokemonAPI.call(
@@ -226,7 +260,10 @@ export const getExplorePageData = async (params = {}) => {
 };
 
 /**
- * Consolidated data fetching for home page with complete Pokémon data
+ * Gets complete data for home page
+ *
+ * @param {Object} params - Query parameters
+ * @returns {Object} Featured Pokemon and Pokemon types
  */
 export const getHomePageData = async (params = {}) => {
     return PokemonAPI.call(
@@ -244,7 +281,7 @@ export const getHomePageData = async (params = {}) => {
 };
 
 /**
- * Clear all Pokemon caches
+ * Clears all Pokemon caches
  */
 export const clearCache = () => {
     PokemonCache.clearAll();

@@ -9,7 +9,6 @@ import {
 } from "@/lib/db";
 import { DEFAULT_FEATURED_POKEMON } from "@/lib/pokemon-constants";
 import {
-    capitalizeFirstLetter,
     extractBestSpriteUrl,
     formatPokemonId,
     formatPokemonTypes,
@@ -165,7 +164,10 @@ async function getPokemonPageData(params = {}) {
 
             // If we need complete data and have results, enrich the data
             if (includeFullData && basicPokemonList.length > 0) {
-                const pokemonIds = basicPokemonList.map((p) => parseInt(p.id));
+                // FIXED: Parse IDs correctly to handle padded string IDs
+                const pokemonIds = basicPokemonList.map((p) =>
+                    parseInt(p.id.replace(/\D/g, ""))
+                );
                 const fullPokemonData = await fetchFullPokemonData(
                     pokemonIds,
                     basicPokemonList
@@ -181,7 +183,10 @@ async function getPokemonPageData(params = {}) {
 
             // If we need complete data and have results, enrich the data
             if (includeFullData && featuredPokemon.length > 0) {
-                const pokemonIds = featuredPokemon.map((p) => parseInt(p.id));
+                // FIXED: Parse IDs correctly to handle padded string IDs
+                const pokemonIds = featuredPokemon.map((p) =>
+                    parseInt(p.id.replace(/\D/g, ""))
+                );
                 const fullPokemonData = await fetchFullPokemonData(
                     pokemonIds,
                     featuredPokemon
@@ -204,8 +209,9 @@ async function getPokemonPageData(params = {}) {
 
             // Also enrich featured data if needed
             if (includeFullData && response.featuredPokemon.length > 0) {
+                // FIXED: Parse IDs correctly to handle padded string IDs
                 const featuredIds = response.featuredPokemon.map((p) =>
-                    parseInt(p.id)
+                    parseInt(p.id.replace(/\D/g, ""))
                 );
                 const fullFeaturedData = await fetchFullPokemonData(
                     featuredIds,
@@ -269,11 +275,19 @@ async function fetchFullPokemonData(pokemonIds, basicPokemonList) {
         // Sort the results to match the original sort order from the basic list
         const sortedPokemonList = [];
         basicPokemonList.forEach((basicPokemon) => {
-            const fullPokemon = enrichedPokemonData.find(
-                (p) =>
-                    p.id === basicPokemon.id ||
+            // FIXED: Improve matching to handle differences in ID formatting
+            const fullPokemon = enrichedPokemonData.find((p) => {
+                // Match by ID without leading zeros
+                const pIdNumber = parseInt(p.id.replace(/\D/g, ""));
+                const basicIdNumber = parseInt(
+                    basicPokemon.id.replace(/\D/g, "")
+                );
+
+                return (
+                    pIdNumber === basicIdNumber ||
                     p.name.toLowerCase() === basicPokemon.name.toLowerCase()
-            );
+                );
+            });
             if (fullPokemon) {
                 sortedPokemonList.push(fullPokemon);
             } else {

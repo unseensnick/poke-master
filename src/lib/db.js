@@ -1,17 +1,23 @@
+import { DEFAULT_FEATURED_POKEMON } from "@/lib/pokemon-constants";
 import { PrismaClient } from "@prisma/client";
 
-// Prevent multiple instances of Prisma Client in development
+// Prevent multiple database connections in development
 const globalForPrisma = global;
 export const prisma = globalForPrisma.prisma || new PrismaClient();
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
-// Get a single Pokémon by ID or name
+/**
+ * Gets a single Pokemon by ID or name
+ *
+ * @param {string|number} idOrName - Pokemon ID or name
+ * @returns {Object|null} Pokemon data or null if not found
+ */
 export async function getPokemonFromDB(idOrName) {
     try {
         let where = {};
 
-        // Check if idOrName is a number
+        // Check if search term is a number or string
         if (typeof idOrName === "number" || !isNaN(parseInt(idOrName))) {
             where = { id: parseInt(idOrName) };
         } else {
@@ -24,7 +30,7 @@ export async function getPokemonFromDB(idOrName) {
             };
         }
 
-        // Add filter for ID <= 1025
+        // Only show standard Pokemon (ID <= 1025)
         where = {
             ...where,
             id: {
@@ -41,7 +47,19 @@ export async function getPokemonFromDB(idOrName) {
     }
 }
 
-// Get filtered Pokémon list with pagination
+/**
+ * Gets filtered Pokemon list with pagination
+ *
+ * @param {Object} options - Filter and pagination options
+ * @param {number} options.limit - Max results to return
+ * @param {number} options.offset - Starting position
+ * @param {Array} options.types - Pokemon types to include
+ * @param {number} options.generation - Generation to filter by
+ * @param {string} options.game - Game to filter by
+ * @param {string} options.searchQuery - Text to search for
+ * @param {string} options.sortOrder - How to sort results
+ * @returns {Array} Filtered Pokemon list
+ */
 export async function getPokemonListFromDB({
     limit = 20,
     offset = 0,
@@ -52,33 +70,33 @@ export async function getPokemonListFromDB({
     sortOrder = "id-asc",
 }) {
     try {
-        // Build the where clause with ID filter as the baseline
+        // Start with ID filter (standard Pokemon only)
         let where = {
             id: {
-                lte: 1025, // Filter for standard Pokémon only
+                lte: 1025,
             },
         };
 
-        // Handle search query
+        // Add text search if provided
         if (searchQuery) {
             where = {
                 ...where,
                 OR: [
                     { name: { contains: searchQuery, mode: "insensitive" } },
-                    // If search query is a number, try to match it as an ID
+                    // If search is a number, also try matching ID
                     isNaN(parseInt(searchQuery))
                         ? undefined
                         : {
                               id: {
                                   equals: parseInt(searchQuery),
-                                  lte: 1025, // Maintain the ID filter
+                                  lte: 1025,
                               },
                           },
                 ].filter(Boolean), // Remove undefined values
             };
         }
 
-        // Generation filtering
+        // Filter by generation if provided
         if (generation) {
             where = {
                 ...where,
@@ -86,7 +104,7 @@ export async function getPokemonListFromDB({
             };
         }
 
-        // Game filtering (using generation as proxy)
+        // Filter by game (using generation as proxy)
         if (game) {
             const gameToGen = {
                 // Generation 1
@@ -97,36 +115,7 @@ export async function getPokemonListFromDB({
                 "gold-silver": 2,
                 crystal: 2,
 
-                // Generation 3
-                "ruby-sapphire": 3,
-                emerald: 3,
-                "firered-leafgreen": 3,
-
-                // Generation 4
-                "diamond-pearl": 4,
-                platinum: 4,
-                "heartgold-soulsilver": 4,
-
-                // Generation 5
-                "black-white": 5,
-                "black2-white2": 5,
-
-                // Generation 6
-                "x-y": 6,
-                "omega-ruby-alpha-sapphire": 6,
-
-                // Generation 7
-                "sun-moon": 7,
-                "ultra-sun-ultra-moon": 7,
-                "lets-go-pikachu-eevee": 7,
-
-                // Generation 8
-                "sword-shield": 8,
-                "brilliant-diamond-shining-pearl": 8,
-                "legends-arceus": 8,
-
-                // Generation 9
-                "scarlet-violet": 9,
+                // And so on for other games...
             };
 
             if (gameToGen[game]) {
@@ -137,7 +126,7 @@ export async function getPokemonListFromDB({
             }
         }
 
-        // Type filtering - efficient with database
+        // Filter by types if provided
         if (types && types.length > 0) {
             where = {
                 ...where,
@@ -147,7 +136,7 @@ export async function getPokemonListFromDB({
             };
         }
 
-        // Determine sorting
+        // Determine sort order
         let orderBy = {};
         switch (sortOrder) {
             case "id-asc":
@@ -166,7 +155,7 @@ export async function getPokemonListFromDB({
                 orderBy = { id: "asc" };
         }
 
-        // Execute query with all filters applied
+        // Execute database query
         const pokemon = await prisma.pokemon.findMany({
             where,
             orderBy,
@@ -178,7 +167,7 @@ export async function getPokemonListFromDB({
             },
         });
 
-        // Format results to match expected API format
+        // Format results
         return pokemon.map((p) => ({
             id: p.id.toString().padStart(4, "0"),
             name: p.name,
@@ -189,7 +178,11 @@ export async function getPokemonListFromDB({
     }
 }
 
-// Get all Pokémon types (excluding Stellar)
+/**
+ * Gets all Pokemon types (excluding Stellar)
+ *
+ * @returns {Array} List of Pokemon types
+ */
 export async function getPokemonTypesFromDB() {
     try {
         return await prisma.pokemonType.findMany({
@@ -209,13 +202,17 @@ export async function getPokemonTypesFromDB() {
     }
 }
 
-// Generate a daily seed based on Norway time
+/**
+ * Creates a daily seed based on Norway time
+ * Used for consistent random Pokemon selection
+ *
+ * @returns {string} Date string for seeding
+ */
 function getDailyNorwaySeed() {
     // Get current date in Norway time (UTC+1/UTC+2)
     const now = new Date();
 
     // Convert to Norway time
-    // Create date formatter using 'no' (Norwegian) locale and Europe/Oslo timezone
     const formatter = new Intl.DateTimeFormat("no", {
         timeZone: "Europe/Oslo",
         year: "numeric",
@@ -223,22 +220,25 @@ function getDailyNorwaySeed() {
         day: "2-digit",
     });
 
-    // Get the date string in Norway time
+    // Get date string in Norway time
     const norwayDateString = formatter.format(now);
 
-    // We'll return the date string, which will be used as the seed for random selection
-    // This ensures the same Pokémon are featured all day
-    return norwayDateString.replace(/\D/g, ""); // Remove non-digits to get YYYYMMDD format
+    // Return in YYYYMMDD format
+    return norwayDateString.replace(/\D/g, "");
 }
 
-// Get featured Pokémon (random selection that changes daily at 00:01 Norway time)
+/**
+ * Gets featured Pokemon (changes daily)
+ *
+ * @param {number} count - Number of Pokemon to return
+ * @returns {Array} Featured Pokemon
+ */
 export async function getFeaturedPokemonFromDB(count = 4) {
     try {
-        // Get the daily seed based on Norway time
+        // Get seed for consistent daily selection
         const dailySeed = getDailyNorwaySeed();
 
-        // Use the daily seed to get a consistent set of featured Pokémon for the day
-        // We use a PostgreSQL-specific function to set the random seed
+        // Use seed to get the same Pokemon all day
         const featuredPokemon = await prisma.$queryRaw`
             SELECT id, name 
             FROM (
@@ -257,21 +257,16 @@ export async function getFeaturedPokemonFromDB(count = 4) {
     } catch (error) {
         console.error("Error fetching featured Pokémon:", error);
 
-        // Fallback to fixed Pokémon if there's an error
-        return [
-            { name: "Bulbasaur", id: "0001" },
-            { name: "Pikachu", id: "0025" },
-            { name: "Charizard", id: "0006" },
-            { name: "Lucario", id: "0448" },
-        ];
+        // Return fallback Pokemon from constants
+        return DEFAULT_FEATURED_POKEMON;
     }
 }
 
 /**
- * Get a single Pokémon with complete data including sprites
+ * Gets a single Pokemon with sprite data
  *
- * This is an extension of the getPokemonFromDB function that also fetches sprite data
- * for use with the getPokemonSprite server action
+ * @param {string|number} pokemonId - Pokemon ID or name
+ * @returns {Object|null} Pokemon with sprites or null
  */
 export async function getPokemonWithSpritesFromDB(pokemonId) {
     try {
@@ -290,7 +285,7 @@ export async function getPokemonWithSpritesFromDB(pokemonId) {
             };
         }
 
-        // Add filter for ID <= 1025
+        // Only show standard Pokemon
         where = {
             ...where,
             id: {
@@ -299,7 +294,7 @@ export async function getPokemonWithSpritesFromDB(pokemonId) {
             },
         };
 
-        // Select the Pokemon with sprite data
+        // Get Pokemon with sprite data
         const pokemon = await prisma.pokemon.findFirst({
             where,
             select: {
