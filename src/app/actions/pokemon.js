@@ -5,6 +5,7 @@ import {
     getPokemonFromDB,
     getPokemonListFromDB,
     getPokemonTypesFromDB,
+    getPokemonWithSpritesFromDB,
     prisma,
 } from "@/lib/db";
 import { DEFAULT_FEATURED_POKEMON } from "@/lib/pokemon-constants";
@@ -15,17 +16,15 @@ import {
 } from "@/lib/pokemon-utils";
 
 /**
- * Get a single Pokémon by ID or name
+ * Retrieves a single Pokémon by ID or name
+ * @param {string|number} idOrName - Pokémon ID or name
+ * @returns {Promise<Object|null>} Formatted Pokémon data with id, name, weight, height, types
  */
 export async function getPokemon(idOrName) {
     try {
         const pokemon = await getPokemonFromDB(idOrName);
+        if (!pokemon) return null;
 
-        if (!pokemon) {
-            return null;
-        }
-
-        // Format to match the expected structure used by components
         return {
             id: formatPokemonId(pokemon.id),
             name: pokemon.name,
@@ -40,22 +39,15 @@ export async function getPokemon(idOrName) {
 }
 
 /**
- * Get a Pokémon sprite URL by ID
+ * Fetches a Pokémon's sprite URL by ID
+ * @param {number} pokemonId - Numeric Pokémon ID
+ * @returns {Promise<string|null>} Best available sprite URL
  */
 export async function getPokemonSprite(pokemonId) {
     try {
-        // Fetch Pokemon with sprites field from the database
-        const pokemon = await prisma.pokemon.findUnique({
-            where: { id: pokemonId },
-            select: {
-                sprites: true,
-            },
-        });
+        const pokemon = await getPokemonWithSpritesFromDB(pokemonId);
 
-        if (!pokemon || !pokemon.sprites) {
-            return null;
-        }
-
+        if (!pokemon || !pokemon.sprites) return null;
         return extractBestSpriteUrl(pokemon.sprites);
     } catch (error) {
         console.error(
@@ -67,7 +59,16 @@ export async function getPokemonSprite(pokemonId) {
 }
 
 /**
- * Get a filtered list of Pokémon with pagination
+ * Retrieves a paginated and filtered list of Pokémon
+ * @param {Object} params - Query parameters
+ * @param {number} [params.limit=20] - Results per page
+ * @param {number} [params.offset=0] - Starting position for pagination
+ * @param {string[]} [params.types=[]] - Filter by Pokémon types
+ * @param {number|null} [params.generation=null] - Filter by generation
+ * @param {string|null} [params.game=null] - Filter by game
+ * @param {string} [params.searchQuery=""] - Search by name or ID
+ * @param {string} [params.sortOrder="id-asc"] - Sorting method
+ * @returns {Promise<Array>} List of matching Pokémon
  */
 export async function getPokemonList(params = {}) {
     try {
@@ -97,7 +98,8 @@ export async function getPokemonList(params = {}) {
 }
 
 /**
- * Get all Pokémon types
+ * Gets all available Pokémon types
+ * @returns {Promise<Array>} List of Pokémon types
  */
 export async function getPokemonTypes() {
     try {
@@ -109,25 +111,40 @@ export async function getPokemonTypes() {
 }
 
 /**
- * Get featured Pokémon
+ * Retrieves featured Pokémon for display
+ * @param {number} [count=4] - Number of Pokémon to return
+ * @returns {Promise<Array>} Featured Pokémon data
  */
 export async function getFeaturedPokemon(count = 4) {
     try {
         return await getFeaturedPokemonFromDB(count);
     } catch (error) {
         console.error("Error fetching featured Pokémon:", error);
-        // Return fallback data if there's an error - now using the shared constant
         return DEFAULT_FEATURED_POKEMON;
     }
 }
 
 /**
- * Shared base function for Pokemon data fetching that handles both explore and home page needs
- * This consolidates the duplicate code between getExplorePageData and getHomePageData
+ * Core data fetching function for both explore and home pages
+ * Optimizes API calls by fetching multiple data types in a single request
+ *
+ * @param {Object} params - Query parameters
+ * @param {number} [params.limit=20] - Results per page
+ * @param {number} [params.offset=0] - Starting position
+ * @param {string[]} [params.types=[]] - Type filters
+ * @param {number|null} [params.generation=null] - Generation filter
+ * @param {string|null} [params.game=null] - Game filter
+ * @param {string} [params.searchQuery=""] - Text search
+ * @param {string} [params.sortOrder="id-asc"] - Sort mode
+ * @param {boolean} [params.includeTypes=false] - Include type data
+ * @param {boolean} [params.includeFeatured=false] - Include featured Pokémon
+ * @param {number} [params.featuredCount=4] - Number of featured Pokémon
+ * @param {boolean} [params.includeFullData=true] - Include sprites and stats
+ * @param {string} [params.primaryDataType="list"] - Main data to fetch ("list" or "featured")
+ * @returns {Promise<Object>} Combined Pokémon data object
  */
 async function getPokemonPageData(params = {}) {
     try {
-        // Extract parameters with defaults
         const {
             limit = 20,
             offset = 0,
@@ -140,15 +157,13 @@ async function getPokemonPageData(params = {}) {
             includeFeatured = false,
             featuredCount = 4,
             includeFullData = true,
-            primaryDataType = "list", // Can be "list" or "featured"
+            primaryDataType = "list",
         } = params;
 
-        // Initialize response object
         const response = {};
 
-        // STEP 1: Get primary data based on the type requested
+        // Fetch primary data based on page type
         if (primaryDataType === "list") {
-            // Get basic Pokemon list first (for explore page scenario)
             const basicPokemonList = await getPokemonListFromDB({
                 limit,
                 offset,
@@ -159,12 +174,9 @@ async function getPokemonPageData(params = {}) {
                 sortOrder,
             });
 
-            // Default to basic list, will be overridden with full data if requested
             response.pokemonList = basicPokemonList;
 
-            // If we need complete data and have results, enrich the data
             if (includeFullData && basicPokemonList.length > 0) {
-                // FIXED: Parse IDs correctly to handle padded string IDs
                 const pokemonIds = basicPokemonList.map((p) =>
                     parseInt(p.id.replace(/\D/g, ""))
                 );
@@ -175,15 +187,10 @@ async function getPokemonPageData(params = {}) {
                 response.pokemonList = fullPokemonData;
             }
         } else if (primaryDataType === "featured") {
-            // Get featured Pokemon (for home page scenario)
             let featuredPokemon = await getFeaturedPokemonFromDB(featuredCount);
-
-            // Default to basic featured data, will be overridden with full data if requested
             response.featuredPokemon = featuredPokemon;
 
-            // If we need complete data and have results, enrich the data
             if (includeFullData && featuredPokemon.length > 0) {
-                // FIXED: Parse IDs correctly to handle padded string IDs
                 const pokemonIds = featuredPokemon.map((p) =>
                     parseInt(p.id.replace(/\D/g, ""))
                 );
@@ -195,21 +202,17 @@ async function getPokemonPageData(params = {}) {
             }
         }
 
-        // STEP 2: Get optional data as requested
-        // Handle including types if requested
+        // Get optional data if requested
         if (includeTypes) {
             response.pokemonTypes = await getPokemonTypesFromDB();
         }
 
-        // Handle including featured Pokemon if requested (for explore page)
         if (includeFeatured && primaryDataType !== "featured") {
             response.featuredPokemon = await getFeaturedPokemonFromDB(
                 featuredCount
             );
 
-            // Also enrich featured data if needed
             if (includeFullData && response.featuredPokemon.length > 0) {
-                // FIXED: Parse IDs correctly to handle padded string IDs
                 const featuredIds = response.featuredPokemon.map((p) =>
                     parseInt(p.id.replace(/\D/g, ""))
                 );
@@ -224,7 +227,6 @@ async function getPokemonPageData(params = {}) {
         return response;
     } catch (error) {
         console.error("Error in shared Pokemon data fetching:", error);
-        // Return an empty response
         return {
             pokemonList: [],
             pokemonTypes: [],
@@ -234,12 +236,14 @@ async function getPokemonPageData(params = {}) {
 }
 
 /**
- * Helper function to fetch and format full Pokemon data
- * Extracted to avoid code duplication within getPokemonPageData
+ * Enriches basic Pokémon data with sprites and detailed information
+ *
+ * @param {number[]} pokemonIds - Array of Pokémon IDs to fetch
+ * @param {Object[]} basicPokemonList - Basic Pokémon data (used to preserve order)
+ * @returns {Promise<Array>} Enhanced Pokémon data with sprites and detailed stats
  */
 async function fetchFullPokemonData(pokemonIds, basicPokemonList) {
     try {
-        // Fetch complete data for all Pokémon at once with a single query
         const fullPokemonData = await prisma.pokemon.findMany({
             where: {
                 id: {
@@ -256,12 +260,9 @@ async function fetchFullPokemonData(pokemonIds, basicPokemonList) {
             },
         });
 
-        // Map the full data to the format expected by components
         const enrichedPokemonData = fullPokemonData.map((pokemon) => {
-            // Extract the best sprite URL from the sprites object
             const spriteUrl = extractBestSpriteUrl(pokemon.sprites);
 
-            // Return formatted Pokémon data with sprite URL included
             return {
                 id: formatPokemonId(pokemon.id),
                 name: pokemon.name,
@@ -272,12 +273,10 @@ async function fetchFullPokemonData(pokemonIds, basicPokemonList) {
             };
         });
 
-        // Sort the results to match the original sort order from the basic list
+        // Preserve original sort order from the basic list
         const sortedPokemonList = [];
         basicPokemonList.forEach((basicPokemon) => {
-            // FIXED: Improve matching to handle differences in ID formatting
             const fullPokemon = enrichedPokemonData.find((p) => {
-                // Match by ID without leading zeros
                 const pIdNumber = parseInt(p.id.replace(/\D/g, ""));
                 const basicIdNumber = parseInt(
                     basicPokemon.id.replace(/\D/g, "")
@@ -288,26 +287,23 @@ async function fetchFullPokemonData(pokemonIds, basicPokemonList) {
                     p.name.toLowerCase() === basicPokemon.name.toLowerCase()
                 );
             });
-            if (fullPokemon) {
-                sortedPokemonList.push(fullPokemon);
-            } else {
-                // Fallback to basic data if full data wasn't found
-                sortedPokemonList.push(basicPokemon);
-            }
+
+            sortedPokemonList.push(fullPokemon || basicPokemon);
         });
 
         return sortedPokemonList;
     } catch (error) {
         console.error("Error fetching full Pokemon data:", error);
-        // Return the original list if there was an error
         return basicPokemonList;
     }
 }
 
 /**
- * Consolidated data fetching for explore page with complete Pokémon data
- * This enhanced version prefetches all needed data for Pokémon cards,
- * eliminating the need for separate requests for each card
+ * Fetches optimized data for the Explore page
+ * Combines Pokémon list, type data, and optional featured Pokémon in a single query
+ *
+ * @param {Object} params - Query parameters (same as getPokemonPageData)
+ * @returns {Promise<Object>} Combined data with pokemonList, pokemonTypes, and optionally featuredPokemon
  */
 export async function getExplorePageData(params = {}) {
     return getPokemonPageData({
@@ -318,7 +314,11 @@ export async function getExplorePageData(params = {}) {
 }
 
 /**
- * Consolidated data fetching for home page
+ * Fetches optimized data for the Home page
+ * Focuses on featured Pokémon with optional type data
+ *
+ * @param {Object} params - Query parameters (same as getPokemonPageData)
+ * @returns {Promise<Object>} Combined data with featuredPokemon and optionally pokemonTypes
  */
 export async function getHomePageData(params = {}) {
     return getPokemonPageData({

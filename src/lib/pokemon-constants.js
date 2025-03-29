@@ -105,7 +105,7 @@ export const SORT_OPTIONS = [
 ];
 
 /**
- * Default featured Pokemon for fallback when API calls fail
+ * Default featured Pokemon for API fallback
  */
 export const DEFAULT_FEATURED_POKEMON = [
     { name: "Bulbasaur", id: "0001" },

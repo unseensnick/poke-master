@@ -8,13 +8,16 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
+/**
+ * App header with responsive navigation, search, and theme controls
+ */
 export function SiteHeader() {
     const isMobile = useIsMobile();
 
     return (
         <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="flex h-16 w-full items-center justify-between px-3 sm:px-6">
-                {/* Logo and Title Section - Fixed Width */}
+                {/* Logo and title section */}
                 <div
                     className="flex items-center flex-shrink-0"
                     style={{ minWidth: "180px" }}
@@ -52,19 +55,22 @@ export function SiteHeader() {
                     </div>
                 </div>
 
-                {/* Navigation and Actions Section */}
+                {/* Navigation and actions section */}
                 <div className="flex items-center gap-3 sm:gap-6 ml-auto">
-                    {/* Only show NavMenu on screens >= 768px (md) */}
+                    {/* Desktop navigation */}
                     <div className="hidden md:block mr-2">
                         <NavMenu />
                     </div>
 
+                    {/* Search (hidden on small mobile) */}
                     <SearchForm className={isMobile ? "hidden sm:block" : ""} />
+
+                    {/* Desktop theme toggle */}
                     <div className="hidden md:block">
                         <ThemeToggle />
                     </div>
 
-                    {/* Only show SidebarTrigger on screens < 768px (md) */}
+                    {/* Mobile sidebar trigger */}
                     <div className="md:hidden">
                         <SidebarTrigger
                             className={cn(

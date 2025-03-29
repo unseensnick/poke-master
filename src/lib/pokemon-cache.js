@@ -1,24 +1,20 @@
 /**
- * Pokemon caching system for browser and server
- * Reduces API calls by storing Pokemon data locally
+ * Pokemon caching system for browser and server environments
  */
 const PokemonCache = {
-    // Storage for cached data
+    // Storage containers
     imageCache: new Map(),
     customPokemonNames: new Set(),
 
-    // Configuration settings
+    // Configuration
     MAX_CACHE_SIZE: 100,
     DEFAULT_EXPIRATION: 60, // Minutes
 
-    // Check if in browser environment
+    // Environment detection
     isBrowser: typeof window !== "undefined",
 
     /**
      * Checks if a Pokemon ID is custom (not from standard database)
-     *
-     * @param {string|number} id - Pokemon ID to check
-     * @returns {boolean} True if custom ID
      */
     isCustomId(id) {
         if (!id) return false;
@@ -29,9 +25,7 @@ const PokemonCache = {
     },
 
     /**
-     * Adds a Pokemon to the custom registry
-     *
-     * @param {string} name - Pokemon name to register
+     * Registers a Pokemon in the custom registry
      */
     registerCustom(name) {
         if (!name) return;
@@ -41,7 +35,6 @@ const PokemonCache = {
             console.log(`Registering ${name} as a custom Pokemon`);
             this.customPokemonNames.add(nameLower);
 
-            // Save to sessionStorage in browser
             if (this.isBrowser) {
                 try {
                     const storedNames = JSON.parse(
@@ -65,10 +58,9 @@ const PokemonCache = {
     },
 
     /**
-     * Loads custom Pokemon from sessionStorage
+     * Loads custom Pokemon from browser storage
      */
     loadStoredCustomPokemon() {
-        // Skip on server
         if (!this.isBrowser) return;
 
         try {
@@ -89,9 +81,6 @@ const PokemonCache = {
 
     /**
      * Checks if a name is registered as custom
-     *
-     * @param {string} name - Pokemon name to check
-     * @returns {boolean} True if registered as custom
      */
     isCustomName(name) {
         if (!name) return false;
@@ -100,39 +89,31 @@ const PokemonCache = {
     },
 
     /**
-     * Creates a standardized cache key
-     *
-     * @param {string|number} nameOrId - Pokemon name or ID
-     * @returns {string} Standardized cache key
+     * Creates standardized cache key
      */
     getCacheKey(nameOrId) {
         return String(nameOrId).toLowerCase().trim();
     },
 
     /**
-     * Gets an image from cache
-     *
-     * @param {string} key - Cache key to look up
-     * @returns {string|null} Image URL or null if not found
+     * Retrieves an image from cache
      */
     getImageFromCache(key) {
         const cacheKey = this.getCacheKey(key);
         const now = Date.now();
 
-        // Check memory cache first
+        // Check memory cache
         if (this.imageCache.has(cacheKey)) {
             const cachedData = this.imageCache.get(cacheKey);
 
-            // Check if expired
             if (!cachedData.expires || cachedData.expires > now) {
                 return cachedData.url;
             } else {
-                // Remove expired data
                 this.imageCache.delete(cacheKey);
             }
         }
 
-        // Try sessionStorage next (browser only)
+        // Check session storage
         if (this.isBrowser) {
             try {
                 const storageKey = `pokemon_img_${cacheKey}`;
@@ -141,13 +122,10 @@ const PokemonCache = {
                 if (storedData) {
                     const parsedData = JSON.parse(storedData);
 
-                    // Check if expired
                     if (!parsedData.expires || parsedData.expires > now) {
-                        // Add back to memory cache
                         this.imageCache.set(cacheKey, parsedData);
                         return parsedData.url;
                     } else {
-                        // Remove expired data
                         sessionStorage.removeItem(storageKey);
                     }
                 }
@@ -159,40 +137,31 @@ const PokemonCache = {
             }
         }
 
-        // Not found in cache
         return null;
     },
 
     /**
-     * Adds an image to cache
-     *
-     * @param {string} key - Cache key
-     * @param {string} imageUrl - Image URL to cache
-     * @param {number} expirationMinutes - Minutes until expiration
+     * Stores an image in cache
      */
     cacheImage(key, imageUrl, expirationMinutes = this.DEFAULT_EXPIRATION) {
         if (!key || !imageUrl) return;
 
         const cacheKey = this.getCacheKey(key);
-
-        // Calculate expiration (null = never expire)
         const expires = expirationMinutes
             ? Date.now() + expirationMinutes * 60 * 1000
             : null;
-
-        // Create cache entry
         const cacheEntry = { url: imageUrl, expires };
 
-        // If cache is full, remove oldest entry
+        // Remove oldest item if cache is full
         if (this.imageCache.size >= this.MAX_CACHE_SIZE) {
             const oldestKey = this.imageCache.keys().next().value;
             this.imageCache.delete(oldestKey);
         }
 
-        // Add to memory cache
+        // Update memory cache
         this.imageCache.set(cacheKey, cacheEntry);
 
-        // Store in sessionStorage (browser only)
+        // Update session storage
         if (this.isBrowser) {
             try {
                 const storageKey = `pokemon_img_${cacheKey}`;
@@ -211,7 +180,7 @@ const PokemonCache = {
         this.imageCache.clear();
         this.customPokemonNames.clear();
 
-        // Clear sessionStorage (browser only)
+        // Clear session storage
         if (this.isBrowser) {
             try {
                 Object.keys(sessionStorage).forEach((key) => {
@@ -228,10 +197,9 @@ const PokemonCache = {
     },
 
     /**
-     * Initialize the cache system
+     * Initializes the cache system
      */
     init() {
-        // Only load from storage in browser
         if (this.isBrowser) {
             this.loadStoredCustomPokemon();
         }
@@ -239,5 +207,5 @@ const PokemonCache = {
     },
 };
 
-// Initialize cache when module loads
+// Initialize cache on module load
 export default PokemonCache.init();

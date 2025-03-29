@@ -8,14 +8,18 @@ import * as React from "react";
 
 const ThemeContext = React.createContext(null);
 
+/**
+ * Theme provider with system preference detection
+ */
 export function ThemeProvider({ children, defaultTheme = "system", ...props }) {
     const [theme, setTheme] = React.useState(defaultTheme);
     const [mounted, setMounted] = React.useState(false);
     const isMobile = useIsMobile();
 
-    // Once mounted on client, we can show the UI
+    // Prevent hydration mismatch
     React.useEffect(() => setMounted(true), []);
 
+    // Apply theme class to document root
     React.useEffect(() => {
         const root = window.document.documentElement;
         root.classList.remove("light", "dark");
@@ -32,6 +36,7 @@ export function ThemeProvider({ children, defaultTheme = "system", ...props }) {
         }
     }, [theme]);
 
+    // Memoize context value
     const value = React.useMemo(
         () => ({
             theme,
@@ -52,6 +57,9 @@ export function ThemeProvider({ children, defaultTheme = "system", ...props }) {
     );
 }
 
+/**
+ * Hook to access theme context
+ */
 export function useTheme() {
     const context = React.useContext(ThemeContext);
     if (!context) {
@@ -60,6 +68,9 @@ export function useTheme() {
     return context;
 }
 
+/**
+ * Theme toggle switch with light/dark icons
+ */
 export function ThemeToggle({ className, ...props }) {
     const { theme, setTheme, isMobile } = useTheme();
     const [mounted, setMounted] = React.useState(false);
@@ -68,6 +79,7 @@ export function ThemeToggle({ className, ...props }) {
         setMounted(true);
     }, []);
 
+    // Determine actual theme considering system preference
     const resolvedTheme = React.useMemo(() => {
         if (!mounted) return theme;
 
@@ -80,6 +92,7 @@ export function ThemeToggle({ className, ...props }) {
         return theme;
     }, [theme, mounted]);
 
+    // Toggle between light and dark
     const handleToggle = (checked) => {
         setTheme(checked ? "light" : "dark");
     };
@@ -98,7 +111,7 @@ export function ThemeToggle({ className, ...props }) {
             className={className}
             {...props}
         >
-            {/* Icons are inside a container div that's positioned behind the thumb */}
+            {/* Light mode icon */}
             <Sun
                 className={cn(
                     "transition-colors",
@@ -107,6 +120,7 @@ export function ThemeToggle({ className, ...props }) {
                 )}
             />
 
+            {/* Dark mode icon */}
             <Moon
                 className={cn(
                     "transition-colors",

@@ -7,33 +7,36 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Pokemon entity with type information and generation linking
 model Pokemon {
   id             Int      @id
   name           String   @unique
-  weight         Float
-  height         Float
-  types          String[] // Array of type names
-  stats          Json? // Stores HP, attack, defense, etc.
-  abilities      String[] // Array of ability names
-  sprites        Json? // Contains URLs for different sprite versions
-  generationId   Int? // Added for efficient filtering
+  weight         Float // In kg
+  height         Float // In meters
+  types          String[] // Type names array for filtering
+  stats          Json? // HP, attack, defense, etc.
+  abilities      String[] // Ability names
+  sprites        Json? // Image URLs by variant
+  generationId   Int? // Generation reference
   baseExperience Int?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   @@index([name])
   @@index([generationId])
-  @@index([types]) // Index for type filtering
+  @@index([types])
 }
 
+// Pokemon type classification
 model PokemonType {
   id   Int    @id @default(autoincrement())
   name String @unique
 }
 
+// Game generations with Pokemon ID ranges
 model Generation {
   id    Int      @id
   name  String
-  games String[]
-  range Int[] // Stores [min, max] Pokémon IDs for this generation
+  games String[] // Games in this generation
+  range Int[] // [min, max] Pokemon IDs
 }

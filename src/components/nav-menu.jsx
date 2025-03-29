@@ -9,13 +9,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as React from "react";
 
+/**
+ * Main navigation menu with active state detection
+ */
 export function NavMenu() {
     const pathname = usePathname();
 
+    /**
+     * Navigation link component with active state styling
+     */
     const NavLink = ({ href, children, disabled = false }) => {
         const isActive = pathname === href;
 
-        // If disabled, just return a styled span with no navigation capabilities
+        // Disabled state - shows "Soon" badge
         if (disabled) {
             return (
                 <NavigationMenuItem>
@@ -25,7 +31,7 @@ export function NavMenu() {
                             text-foreground/40 cursor-not-allowed
                             flex items-center
                         `}
-                        onClick={(e) => e.preventDefault()} // Prevent any default action
+                        onClick={(e) => e.preventDefault()}
                     >
                         {children}
                         <span className="ml-1 text-[10px] bg-foreground/10 text-foreground/60 rounded-md px-1.5">

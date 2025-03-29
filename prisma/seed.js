@@ -2,7 +2,7 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const fetch = require("node-fetch");
 
-// Define all generations with correct ranges
+// Generation data with ID ranges
 const GENERATIONS = [
     {
         id: 1,
@@ -55,14 +55,15 @@ const GENERATIONS = [
     },
 ];
 
-// Enhanced function to determine a Pokémon's generation based on its ID
+/**
+ * Determines Pokemon's generation from ID
+ */
 function determineGeneration(pokemonId) {
-    // Make sure we're working with a number
     const id = parseInt(pokemonId);
 
     if (isNaN(id)) {
         console.warn(`Invalid Pokémon ID: ${pokemonId}`);
-        return 9; // Default to latest generation
+        return 9; // Default to latest
     }
 
     for (const gen of GENERATIONS) {
@@ -72,20 +73,21 @@ function determineGeneration(pokemonId) {
         }
     }
 
-    // If we get here, the ID is outside our known ranges
     console.warn(
-        `Pokémon ID ${id} doesn't fit in any known generation range. Assigning to latest generation.`
+        `Pokémon ID ${id} outside known ranges. Assigning to latest generation.`
     );
-    return 9; // Default to the latest generation
+    return 9;
 }
 
-// Format Pokémon data for database insertion with guaranteed generationId
+/**
+ * Formats API data for database insertion
+ */
 function formatPokemonData(data) {
     return {
         id: data.id,
         name: data.name.charAt(0).toUpperCase() + data.name.slice(1),
-        weight: data.weight / 10, // Convert to kg
-        height: data.height / 10, // Convert to meters
+        weight: data.weight / 10, // kg
+        height: data.height / 10, // meters
         types: data.types.map((type) => type.type.name),
         stats: {
             hp:
@@ -112,16 +114,18 @@ function formatPokemonData(data) {
             default: data.sprites.front_default,
             official: data.sprites.other["official-artwork"]?.front_default,
         },
-        generationId: determineGeneration(data.id), // Will never be null now
+        generationId: determineGeneration(data.id),
         baseExperience: data.base_experience,
     };
 }
 
-// Main seed function
+/**
+ * Main database seeding function
+ */
 async function main() {
     console.log("Starting database seed...");
 
-    // 1. Seed Pokémon types
+    // Seed Pokemon types
     console.log("Seeding Pokémon types...");
     const typesResponse = await fetch("https://pokeapi.co/api/v2/type");
     const typesData = await typesResponse.json();
@@ -141,7 +145,7 @@ async function main() {
         });
     }
 
-    // 2. Seed generations
+    // Seed generations
     console.log("Seeding generations...");
     for (const gen of GENERATIONS) {
         await prisma.generation.upsert({
@@ -151,10 +155,10 @@ async function main() {
         });
     }
 
-    // 3. Seed Pokémon data
+    // Seed Pokemon data
     console.log("Seeding Pokémon data...");
 
-    // Get total count of Pokémon
+    // Get total count
     const countResponse = await fetch(
         "https://pokeapi.co/api/v2/pokemon?limit=1"
     );
@@ -163,29 +167,29 @@ async function main() {
 
     console.log(`Found ${totalCount} Pokémon to import`);
 
-    // Process in batches to avoid overwhelming the API
+    // Process in batches
     const batchSize = 50;
     for (let offset = 0; offset < totalCount; offset += batchSize) {
         console.log(
             `Processing Pokémon ${offset} to ${offset + batchSize - 1}...`
         );
 
-        // Get a batch of Pokémon
+        // Get batch
         const response = await fetch(
             `https://pokeapi.co/api/v2/pokemon?limit=${batchSize}&offset=${offset}`
         );
         const data = await response.json();
 
-        // Process each Pokémon in the batch
+        // Process each Pokemon
         for (const item of data.results) {
             try {
                 console.log(`Processing Pokémon: ${item.name}...`);
 
-                // Fetch detailed data for this Pokémon
+                // Get details
                 const pokemonResponse = await fetch(item.url);
                 const pokemonData = await pokemonResponse.json();
 
-                // Format and insert into database
+                // Format and insert
                 const formattedData = formatPokemonData(pokemonData);
 
                 await prisma.pokemon.upsert({
@@ -201,7 +205,7 @@ async function main() {
                 console.error(`Error processing Pokémon ${item.name}:`, error);
             }
 
-            // Small delay to be nice to the API
+            // API rate limiting
             await new Promise((resolve) => setTimeout(resolve, 100));
         }
     }
@@ -209,7 +213,7 @@ async function main() {
     console.log("Seed completed successfully!");
 }
 
-// Run the seed function
+// Execute seed
 main()
     .catch((e) => {
         console.error("Error during seed:", e);

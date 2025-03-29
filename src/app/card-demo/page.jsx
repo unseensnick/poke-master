@@ -4,15 +4,17 @@ import PokemonCard from "@/components/pokemon-card";
 import { getExplorePageData } from "@/services/pokemon-service";
 import { useEffect, useState } from "react";
 
+/**
+ * Showcases PokemonCard component variations with different data sources
+ */
 export default function DemoPage() {
-    // State to hold our preloaded Pokémon data
     const [preloadedPokemon, setPreloadedPokemon] = useState({
         pikachu: null,
         bulbasaur: null,
     });
     const [isLoading, setIsLoading] = useState(true);
 
-    // Custom Pokémon definition (this doesn't need to change)
+    // Custom Pokémon with triple-type configuration
     const elementrio = {
         id: "????",
         name: "Elementrio",
@@ -21,25 +23,23 @@ export default function DemoPage() {
         types: ["Water", "Fire", "Electric"],
     };
 
-    // Load Pokémon data on component mount
     useEffect(() => {
         async function loadDemoPokemon() {
             setIsLoading(true);
             try {
-                // Use our consolidated data fetching to get both Pokémon at once
-                const pikachuData = await getExplorePageData({
-                    searchQuery: "pikachu",
-                    limit: 1,
-                    includeTypes: false,
-                    includeFullData: true,
-                });
-
-                const bulbasaurData = await getExplorePageData({
-                    searchQuery: "bulbasaur",
-                    limit: 1,
-                    includeTypes: false,
-                    includeFullData: true,
-                });
+                // Fetch both Pokémon in parallel
+                const [pikachuData, bulbasaurData] = await Promise.all([
+                    getExplorePageData({
+                        searchQuery: "pikachu",
+                        limit: 1,
+                        includeFullData: true,
+                    }),
+                    getExplorePageData({
+                        searchQuery: "bulbasaur",
+                        limit: 1,
+                        includeFullData: true,
+                    }),
+                ]);
 
                 setPreloadedPokemon({
                     pikachu: pikachuData.pokemonList?.[0] || null,
@@ -62,10 +62,10 @@ export default function DemoPage() {
             </h1>
             <div className="container mx-auto px-4">
                 <div className="flex flex-wrap justify-center gap-10">
-                    {/* Using preloaded data (optimized server action approach) */}
+                    {/* Electric-type Pokémon (Pikachu) */}
                     <div>
                         <div className="text-center text-lg font-bold mb-4 text-muted-foreground">
-                            Preloaded Data (Single-Type)
+                            Electric Type (Pikachu)
                         </div>
                         {isLoading ? (
                             <div className="h-[480px] w-[300px] flex items-center justify-center bg-card rounded-xl">
@@ -78,10 +78,10 @@ export default function DemoPage() {
                         )}
                     </div>
 
-                    {/* Using preloaded data (optimized server action approach) */}
+                    {/* Grass/Poison dual-type Pokémon (Bulbasaur) */}
                     <div>
                         <div className="text-center text-lg font-bold mb-4 text-muted-foreground">
-                            Preloaded Data (Dual-Type)
+                            Grass/Poison Type (Bulbasaur)
                         </div>
                         {isLoading ? (
                             <div className="h-[480px] w-[300px] flex items-center justify-center bg-card rounded-xl">
@@ -94,10 +94,10 @@ export default function DemoPage() {
                         )}
                     </div>
 
-                    {/* Custom Pokémon (this doesn't use the database) */}
+                    {/* Custom triple-type Pokémon */}
                     <div>
                         <div className="text-center text-lg font-bold mb-4 text-muted-foreground">
-                            Custom Pokémon (Triple-Type)
+                            Custom Triple-Type (Elementrio)
                         </div>
                         <PokemonCard
                             pokemon={elementrio}

@@ -5,14 +5,7 @@ import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
 /**
- * Shows an animated loading spinner
- *
- * @param {Object} props - Component props
- * @param {string} props.size - Size (xs, sm, md, lg, xl)
- * @param {string} props.className - Additional CSS classes
- * @param {string} props.color - Color (primary, secondary, muted)
- * @param {boolean} props.center - Whether to center in container
- * @returns {JSX.Element} Rendered spinner
+ * Animated loading spinner with size and color options
  */
 export function LoadingSpinner({
     size = "md",
@@ -20,7 +13,7 @@ export function LoadingSpinner({
     color = "primary",
     center = false,
 }) {
-    // Define size classes for different spinner sizes
+    // Size classes
     const sizeClasses = {
         xs: "size-4",
         sm: "size-6",
@@ -29,7 +22,7 @@ export function LoadingSpinner({
         xl: "size-24",
     };
 
-    // Define color classes
+    // Color classes
     const colorClasses = {
         primary: "border-primary",
         secondary: "border-secondary",
@@ -37,7 +30,7 @@ export function LoadingSpinner({
         card: "border-card-foreground/50",
     };
 
-    // Add centering classes if needed
+    // Centering classes
     const centerClasses = center ? "flex justify-center items-center" : "";
 
     return (
@@ -56,13 +49,7 @@ export function LoadingSpinner({
 }
 
 /**
- * Shows a full-screen loading spinner with background
- *
- * @param {Object} props - Component props
- * @param {string} props.size - Size of spinner
- * @param {string} props.color - Color of spinner
- * @param {string} props.className - Additional CSS classes
- * @returns {JSX.Element} Rendered full-page spinner
+ * Full-screen loading spinner with backdrop
  */
 export function FullPageSpinner({
     size = "lg",
@@ -82,12 +69,7 @@ export function FullPageSpinner({
 }
 
 /**
- * Shows a gray placeholder box while content loads
- *
- * @param {Object} props - Component props
- * @param {string} props.className - Additional CSS classes
- * @param {React.ReactNode} props.children - Optional content
- * @returns {JSX.Element} Rendered skeleton
+ * Placeholder for content loading states
  */
 export function Skeleton({ className, children }) {
     return (

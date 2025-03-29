@@ -11,6 +11,9 @@ import { MoveRight, Timer } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
+/**
+ * Main features showcase with cards for each application capability
+ */
 export function FeaturesSection() {
     const features = [
         {
@@ -51,7 +54,7 @@ export function FeaturesSection() {
             className="w-full py-16 px-4 md:py-24 bg-card/60"
         >
             <div className="max-w-7xl mx-auto">
-                {/* Heading */}
+                {/* Section heading */}
                 <div className="text-center mb-16">
                     <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
                         Features
@@ -61,7 +64,7 @@ export function FeaturesSection() {
                     </p>
                 </div>
 
-                {/* Features Cards */}
+                {/* Feature cards grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     {features.map((feature, index) => (
                         <Card
@@ -74,7 +77,7 @@ export function FeaturesSection() {
                             }`}
                         >
                             <div className="h-48 relative bg-muted/30 overflow-hidden">
-                                {/* Feature image with themed background */}
+                                {/* Feature image */}
                                 <div
                                     className="absolute inset-0 flex items-center justify-center"
                                     style={{
@@ -90,6 +93,7 @@ export function FeaturesSection() {
                                     />
                                 </div>
 
+                                {/* Coming soon badge */}
                                 {feature.comingSoon && (
                                     <div className="absolute top-0 right-0 bg-background/80 px-3 py-1 rounded-bl-lg flex items-center">
                                         <Timer className="mr-1 size-3 text-foreground/70" />

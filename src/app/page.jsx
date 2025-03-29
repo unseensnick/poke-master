@@ -3,35 +3,30 @@ import { FeaturesSection } from "@/components/features";
 import { HeroSection } from "@/components/hero-section";
 import { getHomePageData } from "@/services/pokemon-service";
 
-// Make this a server component that pre-fetches data
+/**
+ * Prefetches featured Pokémon data to eliminate client-side loading
+ * @returns {JSX.Element} The rendered homepage
+ */
 export default async function HomePage() {
-    // Get featured Pokémon data with a single request
-    const data = await getHomePageData({
-        featuredCount: 4,
-    });
+    // Fetch initial data at build/request time
+    const data = await getHomePageData();
 
     return (
         <main>
             {/* 
-        Animation presets available:
-        - "tight": Closely follows cursor with minimal lag
-        - "smooth": Balanced following with slight lag
-        - "floaty": Slow, drifting movement with significant lag
-        
-        Or provide custom settings with animationConfig:
-        animationConfig={{ damping: 15, stiffness: 250, mass: 0.3 }}
-        
-        Other customizable props:
-        - lightColor: CSS color class (e.g., "bg-indigo-500/20")
-        - lightSize: Size in pixels (e.g., 600)
-        - initialPosition: Starting position (e.g., { x: 0, y: 300 })
-      */}
+              HeroSection configuration options:
+              - animationPreset: "tight" | "smooth" | "floaty" - Controls cursor following behavior
+              - animationConfig: Custom animation settings: { damping: number, stiffness: number, mass: number }
+              - lightColor: CSS color class for glow effect 
+              - lightSize: Diameter in pixels for light effect
+              - initialX: Starting X position for light effect
+              - initialY: Starting Y position for light effect
+            */}
             <HeroSection
                 animationPreset="tight"
                 lightColor="bg-purple-500/20"
                 lightSize={500}
             />
-            {/* Pass pre-fetched data to the component */}
             <FeaturedPokemon initialPokemon={data.featuredPokemon} />
             <FeaturesSection />
             <footer className="py-10 text-center text-md text-muted-foreground">

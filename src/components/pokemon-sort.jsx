@@ -11,7 +11,7 @@ import { SORT_OPTIONS } from "@/lib/pokemon-constants";
 import { ArrowDownAZ, ArrowDownUp, ArrowUpAZ, ArrowUpDown } from "lucide-react";
 
 /**
- * Icons for each sort option
+ * Icon mapping for sort options
  */
 const SORT_ICONS = {
     "id-asc": ArrowUpDown,
@@ -22,15 +22,9 @@ const SORT_ICONS = {
 
 /**
  * Dropdown for selecting Pokemon sort order
- *
- * @param {Object} props - Component props
- * @param {string} props.value - Current sort option
- * @param {Function} props.onChange - Called when selection changes
- * @param {string} props.className - Additional CSS classes
- * @returns {JSX.Element} Sort dropdown component
  */
 export function PokemonSort({ value = "id-asc", onChange, className = "" }) {
-    // Get icon component for current sort option
+    // Get icon for current sort option
     const getIcon = () => {
         const Icon = SORT_ICONS[value] || ArrowUpDown;
         return <Icon className="h-4 w-4 mr-2" />;

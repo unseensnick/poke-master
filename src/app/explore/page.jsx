@@ -17,7 +17,7 @@ import React, {
     useState,
 } from "react";
 
-// Import shared animation variants
+// Animation variants
 import {
     containerVariants,
     fadeVariants,
@@ -26,11 +26,7 @@ import {
 } from "@/lib/animation-variants";
 
 /**
- * Grid of Pokemon cards with staggered animation
- *
- * @param {Object} props - Component props
- * @param {Array} props.pokemonList - List of Pokemon data to display
- * @returns {JSX.Element} Animated grid of Pokemon cards
+ * Renders Pokemon grid with staggered animation
  */
 const PokemonGrid = React.memo(({ pokemonList }) => {
     return (
@@ -57,11 +53,7 @@ const PokemonGrid = React.memo(({ pokemonList }) => {
 PokemonGrid.displayName = "PokemonGrid";
 
 /**
- * Displays when no Pokemon match the filter criteria
- *
- * @param {Object} props - Component props
- * @param {Function} props.onClearFilters - Called when clear filters button is clicked
- * @returns {JSX.Element} Empty state message with clear filters action
+ * Empty state when no Pokemon match filter criteria
  */
 const EmptyState = React.memo(({ onClearFilters }) => {
     return (
@@ -87,9 +79,7 @@ const EmptyState = React.memo(({ onClearFilters }) => {
 EmptyState.displayName = "EmptyState";
 
 /**
- * Displays during initial data loading
- *
- * @returns {JSX.Element} Loading spinner
+ * Initial loading state indicator
  */
 const InitialLoading = React.memo(() => {
     return (
@@ -107,17 +97,14 @@ const InitialLoading = React.memo(() => {
 InitialLoading.displayName = "InitialLoading";
 
 /**
- * Explore page with Pokemon grid, filtering and infinite scrolling
- * Fetches and displays Pokemon data with advanced filtering options
- *
- * @returns {JSX.Element} Complete explore page
+ * Explore page with filtering, sorting and infinite scrolling
  */
 export default function ExplorePage() {
-    // Search params from URL
+    // URL search parameters
     const searchParams = useSearchParams();
     const searchQuery = searchParams.get("search") || "";
 
-    // State for Pokemon data and loading
+    // Pokemon data state
     const [pokemonList, setPokemonList] = useState([]);
     const [pokemonTypes, setPokemonTypes] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -126,7 +113,7 @@ export default function ExplorePage() {
     const [hasMore, setHasMore] = useState(true);
     const [showLoadMoreButton, setShowLoadMoreButton] = useState(false);
 
-    // Filter states
+    // Filter state
     const [selectedTypes, setSelectedTypes] = useState([]);
     const [selectedGeneration, setSelectedGeneration] = useState(null);
     const [selectedGame, setSelectedGame] = useState(null);
@@ -139,23 +126,22 @@ export default function ExplorePage() {
     const hasTypesLoaded = useRef(false);
     const ITEMS_PER_PAGE = 20;
 
-    // Show load more button as fallback after a delay
+    // Show load more button fallback after delay
     useEffect(() => {
         if (hasMore && !isLoading) {
             const timer = setTimeout(() => {
                 setShowLoadMoreButton(true);
-            }, 5000); // Show button after 5 seconds
+            }, 5000);
 
             return () => clearTimeout(timer);
         }
-
         return () => {};
     }, [hasMore, isLoading, pokemonList.length]);
 
     // Load initial Pokemon data
     useEffect(() => {
         async function loadInitialData() {
-            // Show loading indicators after a short delay
+            // Show loading indicators after short delay
             const loadingTimer = setTimeout(() => {
                 setIsLoading(true);
                 setInitialLoading(true);
@@ -185,7 +171,6 @@ export default function ExplorePage() {
                     hasTypesLoaded.current = true;
                 }
 
-                // Check if there might be more Pokemon to load
                 setHasMore(
                     data.pokemonList &&
                         data.pokemonList.length >= ITEMS_PER_PAGE
@@ -202,7 +187,7 @@ export default function ExplorePage() {
             }
         }
 
-        // Clear list when filters change to avoid stale data
+        // Clear list when filters change
         if (
             searchQuery !== prevSearchQueryRef.current ||
             selectedTypes.length > 0 ||
@@ -215,7 +200,7 @@ export default function ExplorePage() {
         prevSearchQueryRef.current = searchQuery;
         loadInitialData();
 
-        // Scroll back to top when filters change
+        // Scroll to top when filters change
         window.scrollTo({
             top: 0,
             behavior: "smooth",
@@ -229,21 +214,17 @@ export default function ExplorePage() {
     ]);
 
     /**
-     * Loads more Pokemon when user scrolls to bottom of list
-     * Uses offset-based pagination to fetch next batch
+     * Loads next batch of Pokemon with current filters
      */
     const loadMorePokemon = useCallback(async () => {
-        // Prevent multiple simultaneous calls
         if (isLoading || !hasMore) {
             return;
         }
 
-        // Set loading state immediately
         setIsLoading(true);
         setShowLoadMoreButton(false);
 
         try {
-            // Fetch next page of Pokemon
             const data = await getExplorePageData({
                 limit: ITEMS_PER_PAGE,
                 offset: offset,
@@ -259,27 +240,21 @@ export default function ExplorePage() {
             const newPokemon = data.pokemonList || [];
 
             if (newPokemon.length === 0) {
-                // No more Pokemon to load
                 setHasMore(false);
             } else {
-                // Update offset BEFORE updating the list
+                // Update offset before updating list
                 const newOffset = offset + ITEMS_PER_PAGE;
                 setOffset(newOffset);
 
                 // Append new data and remove duplicates
                 setPokemonList((prev) => {
-                    // Use Set for O(1) lookups
                     const existingIds = new Set(prev.map((p) => p.id));
-
-                    // Filter out duplicates
                     const uniqueNewPokemon = newPokemon.filter(
                         (p) => !existingIds.has(p.id)
                     );
-
                     return [...prev, ...uniqueNewPokemon];
                 });
 
-                // Set hasMore based on if we got a full page
                 setHasMore(newPokemon.length >= ITEMS_PER_PAGE);
             }
         } catch (error) {
@@ -301,42 +276,35 @@ export default function ExplorePage() {
 
     // Intersection Observer for infinite scrolling
     useEffect(() => {
-        // Skip if no more data or already loading
         if (!hasMore || isLoading || !loaderRef.current) return;
 
         const loader = loaderRef.current;
-
-        // Create observer that detects when loader is visible
         const observer = new IntersectionObserver(
             (entries) => {
                 const [entry] = entries;
-
                 if (entry.isIntersecting && !isLoading && hasMore) {
                     loadMorePokemon();
                 }
             },
             {
-                root: null, // Use viewport as root
-                rootMargin: "60px", // Trigger 500px before visible
-                threshold: 0.1, // Trigger at 10% visibility
+                root: null,
+                rootMargin: "60px",
+                threshold: 0.1,
             }
         );
 
-        // Start observing the loader element
         observer.observe(loader);
 
-        // Clean up the observer when component unmounts
         return () => {
             observer.unobserve(loader);
             observer.disconnect();
         };
     }, [hasMore, isLoading, loadMorePokemon, pokemonList.length]);
 
-    // Backup scroll event for maximum reliability
+    // Backup scroll event for reliability
     useEffect(() => {
         if (!hasMore || isLoading) return;
 
-        // Check if we're near the bottom of the page
         function handleScroll() {
             if (!loaderRef.current) return;
 
@@ -349,8 +317,6 @@ export default function ExplorePage() {
         }
 
         window.addEventListener("scroll", handleScroll, { passive: true });
-
-        // Check on mount as well
         handleScroll();
 
         return () => {
@@ -364,7 +330,7 @@ export default function ExplorePage() {
             setSelectedTypes(filters.types || []);
             setSelectedGeneration(filters.generation);
             setSelectedGame(filters.game);
-            setOffset(0); // Reset pagination
+            setOffset(0);
         });
     }, []);
 
@@ -378,7 +344,7 @@ export default function ExplorePage() {
         setSelectedGame(null);
     }, []);
 
-    // Calculate active filter count for display
+    // Calculate active filter count
     const activeFilterCount = useMemo(() => {
         return (
             selectedTypes.length +
@@ -387,7 +353,7 @@ export default function ExplorePage() {
         );
     }, [selectedTypes.length, selectedGeneration, selectedGame]);
 
-    // Memoize filter component for performance
+    // Memoized filter component
     const filtersComponent = useMemo(
         () => (
             <PokemonFilters
@@ -410,7 +376,7 @@ export default function ExplorePage() {
         ]
     );
 
-    // Memoize sort component for performance
+    // Memoized sort component
     const sortComponent = useMemo(
         () => (
             <PokemonSort
@@ -430,7 +396,7 @@ export default function ExplorePage() {
             animate="animate"
             exit="exit"
         >
-            {/* Hero section */}
+            {/* Page header */}
             <motion.div
                 className="mb-8 text-center"
                 variants={fadeVariants.fadeDown}
@@ -453,7 +419,7 @@ export default function ExplorePage() {
                 {sortComponent}
             </div>
 
-            {/* Main content area */}
+            {/* Main content */}
             <AnimatePresence mode="wait">
                 {initialLoading ? (
                     <InitialLoading key="loading" />
@@ -497,7 +463,7 @@ export default function ExplorePage() {
                             )}
                         </AnimatePresence>
 
-                        {/* Invisible infinite scroll trigger */}
+                        {/* Infinite scroll trigger */}
                         {hasMore && (
                             <div className="relative w-full my-10">
                                 <div
@@ -508,7 +474,7 @@ export default function ExplorePage() {
                                     data-testid="infinite-scroll-trigger"
                                 />
 
-                                {/* Fallback button if automatic loading fails */}
+                                {/* Fallback load more button */}
                                 {showLoadMoreButton && !isLoading && (
                                     <div className="flex justify-center mt-4">
                                         <Button

@@ -7,14 +7,7 @@ import {
 import { useEffect, useState } from "react";
 
 /**
- * Hook to load and manage Pokemon data
- *
- * @param {Object} options - Configuration options
- * @param {Object} options.pokemon - Pre-loaded Pokemon data
- * @param {string|number} options.pokemonIdOrName - ID or name to fetch
- * @param {Object} options.preloadedData - Complete preloaded data
- * @param {string} options.customImage - Custom image URL
- * @returns {Object} Pokemon data, image URL and loading states
+ * Hook for loading and managing Pokémon data with caching support
  */
 export function usePokemon({
     pokemon = null,
@@ -22,7 +15,7 @@ export function usePokemon({
     preloadedData = null,
     customImage = null,
 }) {
-    // State for Pokémon data
+    // Data states
     const [pokemonData, setPokemonData] = useState(
         pokemon || preloadedData || null
     );
@@ -30,7 +23,7 @@ export function usePokemon({
         preloadedData?.spriteUrl || customImage || null
     );
 
-    // Loading and error states
+    // Loading states
     const [isLoadingData, setIsLoadingData] = useState(
         !preloadedData && !pokemon && !!pokemonIdOrName
     );
@@ -154,7 +147,6 @@ export function usePokemon({
         loadPokemonImage();
     }, [pokemonData, imageSource, preloadedData, customImage]);
 
-    // Return all necessary data and state for the component
     return {
         pokemonData,
         imageUrl,

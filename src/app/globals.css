@@ -1,19 +1,12 @@
-/* 
- * Tailwind v4 configuration with Pokemon theming
- * Uses OKLCH color space for better color handling
- */
+/* Tailwind v4 configuration with Pokemon theming using OKLCH colors */
 
 @import "tailwindcss";
-
 @plugin "tailwindcss-animate";
 
-/* Create a dark mode variant for selectors */
+/* Dark mode variant */
 @custom-variant dark (&:is(.dark *));
 
-/* 
-   * Light theme variables
-   * Base UI colors use OKLCH for better color reproduction
-   */
+/* Light theme colors */
 :root {
     /* Core UI colors */
     --background: oklch(0.98 0 0);
@@ -22,19 +15,19 @@
     --card-foreground: oklch(0.2 0.02 240);
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.2 0.02 240);
-    --primary: oklch(0.63 0.16 139.92); /* Pokemon Grass green */
+    --primary: oklch(0.63 0.16 139.92); /* Grass green */
     --primary-foreground: oklch(0.98 0 0);
     --secondary: oklch(0.92 0.02 240);
     --secondary-foreground: oklch(0.2 0.02 240);
     --muted: oklch(0.92 0.02 240);
     --muted-foreground: oklch(0.5 0.02 240);
-    --accent: oklch(0.53 0.18 262.81); /* Pokemon Water blue */
+    --accent: oklch(0.53 0.18 262.81); /* Water blue */
     --accent-foreground: oklch(0.98 0 0);
-    --destructive: oklch(0.64 0.17 45.34); /* Pokemon Fire red */
+    --destructive: oklch(0.64 0.17 45.34); /* Fire red */
     --destructive-foreground: oklch(0.98 0 0);
     --border: oklch(0.85 0.02 240);
     --input: oklch(0.85 0.02 240);
-    --ring: oklch(0.63 0.16 139.92); /* Pokemon Grass green */
+    --ring: oklch(0.63 0.16 139.92); /* Grass green */
 
     /* Chart colors */
     --chart-1: oklch(0.646 0.222 41.116);
@@ -49,14 +42,14 @@
     /* Sidebar theming */
     --sidebar: oklch(0.98 0 0);
     --sidebar-foreground: oklch(0.2 0.02 240);
-    --sidebar-primary: oklch(0.63 0.16 139.92); /* Pokemon Grass green */
+    --sidebar-primary: oklch(0.63 0.16 139.92); /* Grass green */
     --sidebar-primary-foreground: oklch(0.98 0 0);
     --sidebar-accent: oklch(0.92 0.02 240);
     --sidebar-accent-foreground: oklch(0.2 0.02 240);
     --sidebar-border: oklch(0.85 0.02 240);
-    --sidebar-ring: oklch(0.63 0.16 139.92); /* Pokemon Grass green */
+    --sidebar-ring: oklch(0.63 0.16 139.92); /* Grass green */
 
-    /* Pokemon type colors - preserve existing values */
+    /* Pokemon type colors */
     --color-pokemon-grass: oklch(0.63 0.16 139.92 / 1);
     --color-pokemon-poison: oklch(0.48 0.17 327.87 / 1);
     --color-pokemon-fire: oklch(0.64 0.17 45.34 / 1);
@@ -85,37 +78,28 @@
     --scrollbar-thumb-hover: oklch(0.75 0.08 240 / 0.7);
 }
 
-/* 
-   * Dark theme variables - matched to the mockup
-   * Inverts most color relationships and uses darker background
-   */
+/* Dark theme colors */
 .dark {
     /* Core UI colors */
-    --background: oklch(
-        0.12 0.02 240
-    ); /* Very dark background like in mockup */
+    --background: oklch(0.12 0.02 240);
     --foreground: oklch(0.98 0 0);
-    --card: oklch(
-        0.15 0.02 240
-    ); /* Slightly lighter than background for cards */
+    --card: oklch(0.15 0.02 240);
     --card-foreground: oklch(0.98 0 0);
     --popover: oklch(0.15 0.02 240);
     --popover-foreground: oklch(0.98 0 0);
-    --primary: oklch(
-        0.63 0.16 139.92
-    ); /* Pokemon Grass green - same as in mockup */
+    --primary: oklch(0.63 0.16 139.92); /* Grass green */
     --primary-foreground: oklch(0.98 0 0);
     --secondary: oklch(0.22 0.02 240);
     --secondary-foreground: oklch(0.98 0 0);
     --muted: oklch(0.22 0.02 240);
     --muted-foreground: oklch(0.7 0.02 240);
-    --accent: oklch(0.53 0.18 262.81); /* Pokemon Water blue */
+    --accent: oklch(0.53 0.18 262.81); /* Water blue */
     --accent-foreground: oklch(0.98 0 0);
-    --destructive: oklch(0.64 0.17 45.34); /* Pokemon Fire red */
+    --destructive: oklch(0.64 0.17 45.34); /* Fire red */
     --destructive-foreground: oklch(0.98 0 0);
     --border: oklch(0.22 0.02 240);
     --input: oklch(0.22 0.02 240);
-    --ring: oklch(0.63 0.16 139.92); /* Pokemon Grass green */
+    --ring: oklch(0.63 0.16 139.92); /* Grass green */
 
     /* Chart colors */
     --chart-1: oklch(0.63 0.16 139.92); /* Grass green */
@@ -125,16 +109,16 @@
     --chart-5: oklch(0.645 0.246 16.439); /* Red */
 
     /* Sidebar theming */
-    --sidebar: oklch(0.1 0.02 240); /* Even darker sidebar than background */
+    --sidebar: oklch(0.1 0.02 240);
     --sidebar-foreground: oklch(0.98 0 0);
-    --sidebar-primary: oklch(0.63 0.16 139.92); /* Pokemon Grass green */
+    --sidebar-primary: oklch(0.63 0.16 139.92); /* Grass green */
     --sidebar-primary-foreground: oklch(0.98 0 0);
     --sidebar-accent: oklch(0.22 0.02 240);
     --sidebar-accent-foreground: oklch(0.98 0 0);
     --sidebar-border: oklch(0.22 0.02 240);
-    --sidebar-ring: oklch(0.63 0.16 139.92); /* Pokemon Grass green */
+    --sidebar-ring: oklch(0.63 0.16 139.92); /* Grass green */
 
-    /* Pokemon type colors - fixing typo in variable names and preserving values */
+    /* Pokemon type colors */
     --color-pokemon-grass: oklch(0.69 0.16 139.78 / 1);
     --color-pokemon-poison: oklch(0.54 0.17 327.65 / 1);
     --color-pokemon-fire: oklch(0.7 0.17 48.44 / 1);
@@ -156,16 +140,13 @@
     --color-pokemon-stellar: oklch(0.7 0.11 182.44 / 1);
     --color-pokemon-unknown: oklch(0.66 0.06 174.02 / 1);
 
-    /* Scrollbar theming for dark mode */
+    /* Scrollbar theming */
     --scrollbar-track: oklch(0.18 0.02 240 / 0.3);
     --scrollbar-thumb: oklch(0.3 0.02 240 / 0.6);
     --scrollbar-thumb-hover: oklch(0.35 0.03 240 / 0.8);
 }
 
-/* 
-   * Tailwind v4 theme mapping
-   * Maps CSS variables to theme values using @theme inline directive
-   */
+/* Tailwind v4 theme mapping */
 @theme inline {
     /* Map core UI variables */
     --color-background: var(--background);
@@ -239,7 +220,7 @@
     --color-scrollbar-thumb-hover: var(--scrollbar-thumb-hover);
 }
 
-/* Base layer styles */
+/* Base styles */
 @layer base {
     * {
         @apply border-border outline-ring/50;
@@ -250,14 +231,13 @@
     }
 }
 
-/* Modern scrollbar styling */
+/* Firefox scrollbar */
 * {
-    /* Firefox */
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
 
-/* Chrome, Edge, Safari */
+/* Webkit scrollbar */
 ::-webkit-scrollbar {
     width: var(--scrollbar-size);
     height: var(--scrollbar-size);
@@ -278,12 +258,10 @@
     background: var(--scrollbar-thumb-hover);
 }
 
-/* Hide buttons in webkit */
 ::-webkit-scrollbar-button {
     display: none;
 }
 
-/* Custom styling for corner */
 ::-webkit-scrollbar-corner {
     background: transparent;
 }

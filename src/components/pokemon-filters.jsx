@@ -27,22 +27,17 @@ import React, {
 } from "react";
 
 /**
- * Badge to display a Pokemon type with selection state
- * Memoized to reduce re-renders
+ * Type filter badge with selection state
  */
 const TypeBadge = React.memo(({ type, isSelected, onToggle }) => {
-    // Create class strings for the badge
     const baseClasses = "cursor-pointer capitalize";
     const selectedClasses = isSelected
         ? `bg-pokemon-${type.name.toLowerCase()} hover:bg-pokemon-${type.name.toLowerCase()}/90`
         : "hover:bg-muted";
 
-    // Handle click with proper event handling
     const handleClick = useCallback(
         (e) => {
-            // Prevent event bubbling
             e.stopPropagation();
-            // Use requestAnimationFrame for smoother updates
             requestAnimationFrame(() => onToggle(type.name));
         },
         [onToggle, type.name]
@@ -64,17 +59,7 @@ const TypeBadge = React.memo(({ type, isSelected, onToggle }) => {
 TypeBadge.displayName = "TypeBadge";
 
 /**
- * Pokemon filter panel with type, generation and game filters
- * Memoized to prevent unnecessary re-renders
- *
- * @param {Object} props - Component props
- * @param {Function} props.onFilterChange - Called when filters change
- * @param {Array} props.selectedTypes - Currently selected types
- * @param {number} props.selectedGeneration - Selected generation ID
- * @param {string} props.selectedGame - Selected game ID
- * @param {string} props.className - Additional CSS classes
- * @param {Array} props.availableTypes - List of available types
- * @returns {JSX.Element} Filter panel component
+ * Filter panel with type, generation and game filters
  */
 const PokemonFilters = React.memo(
     ({
@@ -83,23 +68,22 @@ const PokemonFilters = React.memo(
         selectedGeneration = null,
         selectedGame = null,
         className = "",
-        availableTypes = [], // For pre-loaded types
+        availableTypes = [],
     }) => {
-        // Track previous filter state to prevent duplicate updates
+        // Track previous filter state
         const prevFiltersRef = useRef({
             types: selectedTypes,
             generation: selectedGeneration,
             game: selectedGame,
         });
 
-        // UI state for the filter panel
+        // UI state
         const [uiState, setUiState] = useState({
             isOpen: false,
             activeAccordion: ["types"],
             isLoadingTypes: availableTypes.length === 0,
         });
 
-        // Destructure for easier access
         const { isOpen, activeAccordion, isLoadingTypes } = uiState;
 
         // State for Pokemon types
@@ -111,7 +95,7 @@ const PokemonFilters = React.memo(
             [selectedTypes]
         );
 
-        // Timer for debouncing rapid filter changes
+        // Debounce timer
         const debounceTimerRef = useRef(null);
 
         // Send filter changes with debouncing
@@ -122,7 +106,7 @@ const PokemonFilters = React.memo(
                 }
 
                 debounceTimerRef.current = setTimeout(() => {
-                    // Only trigger if values actually changed
+                    // Only trigger if values changed
                     const prevFilters = prevFiltersRef.current;
                     const typesChanged =
                         filters.types.length !== prevFilters.types.length ||
@@ -137,17 +121,17 @@ const PokemonFilters = React.memo(
                         prevFiltersRef.current = { ...filters };
                         onFilterChange(filters);
                     }
-                }, 50); // Short debounce for responsiveness
+                }, 50);
             },
             [onFilterChange]
         );
 
-        // Toggle filter panel open/closed
+        // Toggle filter panel
         const toggleOpen = useCallback(() => {
             setUiState((prev) => ({ ...prev, isOpen: !prev.isOpen }));
         }, []);
 
-        // Update which accordion sections are open
+        // Update accordion sections
         const handleAccordionChange = useCallback((value) => {
             setUiState((prev) => ({ ...prev, activeAccordion: value }));
         }, []);
@@ -175,23 +159,19 @@ const PokemonFilters = React.memo(
             loadTypes();
         }, [availableTypes]);
 
-        // Toggle a type filter on/off
+        // Toggle type filter
         const toggleType = useCallback(
             (type) => {
-                // Use a Set for faster operations
                 const newTypeSet = new Set(selectedTypes);
 
-                // Toggle presence in set
                 if (newTypeSet.has(type)) {
                     newTypeSet.delete(type);
                 } else {
                     newTypeSet.add(type);
                 }
 
-                // Convert set back to array
                 const newTypes = Array.from(newTypeSet);
 
-                // Update filters
                 debouncedFilterChange({
                     types: newTypes,
                     generation: selectedGeneration,
@@ -206,7 +186,7 @@ const PokemonFilters = React.memo(
             ]
         );
 
-        // Toggle a generation filter on/off
+        // Toggle generation filter
         const toggleGeneration = useCallback(
             (genId) => {
                 const newGeneration =
@@ -226,7 +206,7 @@ const PokemonFilters = React.memo(
             ]
         );
 
-        // Handle game selection change
+        // Handle game selection
         const handleGameChange = useCallback(
             (value) => {
                 const newGame = value === "all" ? null : value;
@@ -258,7 +238,7 @@ const PokemonFilters = React.memo(
             [selectedTypes.length, selectedGeneration, selectedGame]
         );
 
-        // Memoize the types section
+        // Types filter section
         const typesSection = useMemo(
             () => (
                 <AccordionItem value="types">
@@ -297,7 +277,7 @@ const PokemonFilters = React.memo(
             [types, selectedTypeSet, isLoadingTypes, toggleType]
         );
 
-        // Memoize the generations section
+        // Generations filter section
         const generationsSection = useMemo(
             () => (
                 <AccordionItem value="generations">
@@ -341,7 +321,7 @@ const PokemonFilters = React.memo(
 
         return (
             <div className={`w-full ${className}`}>
-                {/* Filter toggle button */}
+                {/* Filter toggle */}
                 <div className="flex items-center justify-between mb-4">
                     <Button
                         variant="outline"
@@ -375,7 +355,7 @@ const PokemonFilters = React.memo(
                     )}
                 </div>
 
-                {/* Filter panel with CSS transition */}
+                {/* Filter panel */}
                 <div
                     className={`
                     overflow-hidden mb-6 border rounded-md bg-card 
@@ -388,7 +368,6 @@ const PokemonFilters = React.memo(
                 `}
                 >
                     <div className="p-4">
-                        {/* Filter accordion */}
                         <Accordion
                             type="multiple"
                             value={activeAccordion}

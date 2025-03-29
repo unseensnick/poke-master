@@ -1,32 +1,26 @@
 /**
- * Constants and utilities for interacting with the Pokemon API
+ * Constants and utilities for Pokemon API interaction
  */
 
-// Fallback images when Pokemon data is unavailable
+// Fallback images
 export const POKE_BALL =
     "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png";
 export const QUESTION_MARK =
     "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/0.png";
 
-// Base URL for the Pokemon API
+// API endpoint
 export const API_BASE_URL = "https://pokeapi.co/api/v2";
 
-// Sprite image URLs
+// Sprite image repositories
 export const SPRITE_URLS = {
-    // Higher quality images for modern interfaces
     officialArtwork:
         "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/",
-    // Default sprites for fallback or retro styling
     default:
         "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/",
 };
 
 /**
- * Fetches data from the Pokemon API
- *
- * @param {string} endpoint - API endpoint (without base URL)
- * @param {boolean} suppressNotFoundErrors - Whether to suppress 404 logs
- * @returns {Promise<Object|null>} JSON response or null for 404s
+ * Fetches data from the Pokemon API with error handling
  */
 export const fetchFromApi = async (
     endpoint,
@@ -37,7 +31,6 @@ export const fetchFromApi = async (
 
         if (!response.ok) {
             if (response.status === 404) {
-                // Only log warning if we're not suppressing not-found errors
                 if (!suppressNotFoundErrors) {
                     console.warn(`Resource not found: ${endpoint}`);
                 }
@@ -48,7 +41,6 @@ export const fetchFromApi = async (
 
         return await response.json();
     } catch (error) {
-        // Don't log if it's a 404 and we're suppressing not-found errors
         if (!(error.message.includes("not found") && suppressNotFoundErrors)) {
             console.error(`Error fetching from API: ${error.message}`);
         }
@@ -58,15 +50,12 @@ export const fetchFromApi = async (
 
 /**
  * Formats raw Pokemon data into a consistent structure
- *
- * @param {Object} data - Raw Pokemon data from API
- * @returns {Object} Formatted Pokemon data for display
  */
 export const formatPokemonData = (data) => ({
     id: data.id.toString().padStart(4, "0"),
     name: data.name.charAt(0).toUpperCase() + data.name.slice(1),
-    weight: (data.weight / 10).toFixed(1), // Convert to kg
-    height: (data.height / 10).toFixed(1), // Convert to meters
+    weight: (data.weight / 10).toFixed(1), // kg
+    height: (data.height / 10).toFixed(1), // meters
     types: data.types.map(
         (type) =>
             type.type.name.charAt(0).toUpperCase() + type.type.name.slice(1)

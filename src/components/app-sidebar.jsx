@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/sidebar";
 import { ThemeToggle } from "./theme-provider";
 
+// Navigation data structure
 const data = {
     navMain: [
         {
@@ -43,6 +44,9 @@ const data = {
     ],
 };
 
+/**
+ * Responsive application sidebar with navigation and theme toggle
+ */
 export function AppSidebar({ ...props }) {
     const pathname = usePathname();
 
@@ -54,7 +58,7 @@ export function AppSidebar({ ...props }) {
             <SidebarContent data-slot="sidebar-content" className="p-4">
                 {data.navMain.map((item) => (
                     <SidebarGroup key={item.title}>
-                        {/* Only show a label on mobile */}
+                        {/* Mobile-only heading with theme toggle */}
                         <div className="md:hidden">
                             <SidebarGroupLabel className="text-sidebar-foreground font-bold mb-2 justify-between ">
                                 {item.title}

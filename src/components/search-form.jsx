@@ -6,6 +6,9 @@ import { Search, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
+/**
+ * Search form with URL-based state management and debouncing
+ */
 export function SearchForm({
     placeholder = "Search Pokémon...",
     className = "",
@@ -15,41 +18,38 @@ export function SearchForm({
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
-    // Local state for the input field
+    // State and refs
     const [inputValue, setInputValue] = useState("");
     const inputRef = useRef(null);
     const debounceTimerRef = useRef(null);
 
-    // When the component mounts or URL changes, sync with URL params
+    // Sync with URL params on mount/URL change
     useEffect(() => {
         const searchFromParams = searchParams.get("search") || "";
         setInputValue(searchFromParams);
     }, [searchParams]);
 
-    // Handle input changes with debouncing
+    // Handle input with debouncing
     const handleInputChange = (e) => {
         const newValue = e.target.value;
         setInputValue(newValue);
 
-        // Clear any existing timer
         if (debounceTimerRef.current) {
             clearTimeout(debounceTimerRef.current);
         }
 
-        // Set a new timer to update search after typing stops
         debounceTimerRef.current = setTimeout(() => {
             updateSearchURL(newValue);
         }, 300);
     };
 
-    // Update the URL with search params
+    // Update URL with search params
     const updateSearchURL = (searchValue) => {
-        // Skip if we're not on the explore page and the search is empty
+        // Skip if not on explore page and search is empty
         if (pathname !== "/explore" && !searchValue) {
             return;
         }
 
-        // Create a new URLSearchParams object for building the query
         const params = new URLSearchParams(searchParams.toString());
 
         if (searchValue) {
@@ -58,30 +58,29 @@ export function SearchForm({
             params.delete("search");
         }
 
-        // If not on explore page and there's a search term, go to explore
+        // Redirect to explore page if searching from elsewhere
         if (pathname !== "/explore" && searchValue) {
             router.push(`/explore?${params.toString()}`);
             return;
         }
 
-        // Otherwise just update the current URL
+        // Update current URL
         const newURL = params.toString()
             ? `${pathname}?${params.toString()}`
             : pathname;
         router.push(newURL, { scroll: false });
     };
 
-    // Handle clearing the search
+    // Clear search
     const handleClear = () => {
         setInputValue("");
         updateSearchURL("");
         inputRef.current?.focus();
     };
 
-    // Handle form submission
+    // Form submission
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Immediately apply the current search term
         updateSearchURL(inputValue);
     };
 
@@ -101,10 +100,12 @@ export function SearchForm({
           text-foreground/80 placeholder:text-foreground/50 focus-visible:border-primary 
           focus-visible:ring-1 focus-visible:ring-primary dark:bg-muted/30"
                 />
+                {/* Search icon */}
                 <Search
                     className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 
           select-none text-pokemon-unknown/50"
                 />
+                {/* Clear button */}
                 {inputValue && (
                     <button
                         type="button"

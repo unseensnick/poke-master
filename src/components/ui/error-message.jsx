@@ -5,15 +5,7 @@ import { cn } from "@/lib/utils";
 import { AlertCircle, AlertTriangle, RefreshCw } from "lucide-react";
 
 /**
- * Shows an error message with optional action button
- *
- * @param {Object} props - Component props
- * @param {string} props.message - Error message to display
- * @param {React.ReactNode} props.action - Action button or component
- * @param {string} props.className - Additional CSS classes
- * @param {string} props.variant - Type of alert (warning, error, info)
- * @param {Function} props.onRetry - Function to call when retrying
- * @returns {JSX.Element} Rendered error message
+ * Error message with optional action button
  */
 export function ErrorMessage({
     message = "An error occurred",
@@ -22,7 +14,7 @@ export function ErrorMessage({
     variant = "error",
     onRetry,
 }) {
-    // Map variants to their respective icons
+    // Map variants to icons
     const IconMap = {
         warning: AlertTriangle,
         error: AlertCircle,
@@ -31,7 +23,7 @@ export function ErrorMessage({
 
     const Icon = IconMap[variant] || IconMap.error;
 
-    // Define colors for different variants
+    // Variant styling
     const bgColors = {
         warning: "bg-yellow-500/10",
         error: "bg-destructive/10",
@@ -50,7 +42,7 @@ export function ErrorMessage({
         info: "text-blue-500",
     };
 
-    // Create retry button if onRetry function was provided
+    // Create retry button if onRetry provided
     const retryButton = onRetry ? (
         <Button
             variant="outline"
@@ -96,16 +88,9 @@ export function ErrorMessage({
 }
 
 /**
- * Shows a small inline error message
- *
- * @param {Object} props - Component props
- * @param {string} props.message - Error message to display
- * @param {string} props.className - Additional CSS classes
- * @param {string} props.variant - Type of alert (warning, error, info)
- * @returns {JSX.Element} Rendered inline error message
+ * Compact error message for inline usage
  */
 export function InlineError({ message, className = "", variant = "error" }) {
-    // Map variants to their respective icons
     const IconMap = {
         warning: AlertTriangle,
         error: AlertCircle,
@@ -114,7 +99,6 @@ export function InlineError({ message, className = "", variant = "error" }) {
 
     const Icon = IconMap[variant] || IconMap.error;
 
-    // Text color mapping
     const textColors = {
         warning: "text-yellow-600 dark:text-yellow-400",
         error: "text-destructive dark:text-destructive",

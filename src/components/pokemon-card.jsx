@@ -16,7 +16,7 @@ import { clearCache } from "@/services/pokemon-service";
 import { AnimatePresence, motion } from "framer-motion";
 import React, { useState } from "react";
 
-// Import UI components
+// UI components
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,10 +28,10 @@ import {
 import { ErrorMessage } from "@/components/ui/error-message";
 import { LoadingSpinner, Skeleton } from "@/components/ui/loading-spinner";
 
-// Import our custom hook
+// Custom hook
 import { usePokemon } from "@/hooks/use-pokemon";
 
-// Import animation settings
+// Animation variants
 import {
     fadeVariants,
     hoverVariants,
@@ -39,15 +39,7 @@ import {
 } from "@/lib/animation-variants";
 
 /**
- * Pokemon card with animations and type-based styling
- *
- * @param {Object} props - Component props
- * @param {Object} props.pokemon - Pre-loaded Pokemon data
- * @param {string|number} props.pokemonIdOrName - Pokemon ID or name to fetch
- * @param {number} props.typeCount - Max number of types to use for styling
- * @param {string} props.customImage - Custom image URL to use
- * @param {Object} props.preloadedData - Complete Pokemon data with sprites
- * @returns {JSX.Element} Pokemon card component
+ * Pokémon card with type-based styling and animations
  */
 const PokemonCard = ({
     pokemon,
@@ -56,7 +48,6 @@ const PokemonCard = ({
     customImage = null,
     preloadedData = null,
 }) => {
-    // Get Pokemon data and loading states from our hook
     const {
         pokemonData,
         imageUrl,
@@ -72,7 +63,6 @@ const PokemonCard = ({
         preloadedData,
     });
 
-    // Track hover state for animations
     const [isHovered, setIsHovered] = useState(false);
 
     // Get type information for styling
@@ -170,7 +160,7 @@ const PokemonCard = ({
                                 pokemonData.types
                             )}
                         >
-                            {/* Visual corner accents */}
+                            {/* Visual accents */}
                             <motion.div
                                 variants={pokemonCardVariants.accent}
                                 className="absolute top-0 left-0 size-[90px] rounded-tl-xl pointer-events-none"
@@ -211,7 +201,7 @@ const PokemonCard = ({
                                 </>
                             )}
 
-                            {/* Animated border on hover */}
+                            {/* Animated border */}
                             <motion.div
                                 variants={pokemonCardVariants.border}
                                 className="absolute inset-0 rounded-xl border-4 border-transparent pointer-events-none overflow-hidden"
@@ -228,9 +218,9 @@ const PokemonCard = ({
                                 }}
                             />
 
-                            {/* Main Card Content */}
+                            {/* Card content */}
                             <div className="relative z-[1] h-full flex flex-col justify-between">
-                                {/* Pokemon ID badge */}
+                                {/* ID Badge */}
                                 <CardHeader className="p-0 m-0">
                                     <motion.div
                                         variants={pokemonCardVariants.badge}
@@ -245,12 +235,12 @@ const PokemonCard = ({
                                     </motion.div>
                                 </CardHeader>
 
-                                {/* Pokemon image and details */}
+                                {/* Pokemon details */}
                                 <CardContent
                                     data-slot="content"
                                     className="p-0 flex-1 flex flex-col items-center justify-center"
                                 >
-                                    {/* Pokemon image container */}
+                                    {/* Pokemon image */}
                                     <div className="size-[180px] bg-[rgba(61,61,61,0.7)] rounded-full mx-auto mt-8 mb-5 flex items-center justify-center relative overflow-hidden">
                                         {isLoadingImage ? (
                                             <Skeleton className="size-[150px] rounded-full flex items-center justify-center">
@@ -274,7 +264,7 @@ const PokemonCard = ({
                                             />
                                         )}
 
-                                        {/* Type-colored glow effect on hover */}
+                                        {/* Type-colored glow */}
                                         <motion.div
                                             className="absolute inset-0 rounded-full pointer-events-none z-[-1]"
                                             initial={{ opacity: 0.3 }}
@@ -300,12 +290,12 @@ const PokemonCard = ({
                                         {pokemonData.name}
                                     </motion.div>
 
-                                    {/* Basic stats - weight and height */}
+                                    {/* Stats */}
                                     <div className="flex justify-around w-full my-4">
                                         <motion.div
                                             className="flex flex-col items-center"
                                             variants={pokemonCardVariants.stats}
-                                            custom={0.1} // Controls animation delay
+                                            custom={0.1}
                                         >
                                             <div className="text-gray-400 text-sm">
                                                 Weight
@@ -317,7 +307,7 @@ const PokemonCard = ({
                                         <motion.div
                                             className="flex flex-col items-center"
                                             variants={pokemonCardVariants.stats}
-                                            custom={0.15} // Controls animation delay
+                                            custom={0.15}
                                         >
                                             <div className="text-gray-400 text-sm">
                                                 Height
@@ -342,7 +332,7 @@ const PokemonCard = ({
                                                 variants={
                                                     pokemonCardVariants.typeBadge
                                                 }
-                                                custom={index} // Controls staggered delay
+                                                custom={index}
                                             >
                                                 <Badge
                                                     data-slot="badge"

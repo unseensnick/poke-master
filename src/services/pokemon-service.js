@@ -20,7 +20,6 @@ import {
  * API wrapper with consistent error handling
  */
 const PokemonAPI = {
-    // Generic wrapper for API calls with error handling
     async call(
         action,
         params,
@@ -40,11 +39,7 @@ const PokemonAPI = {
 };
 
 /**
- * Registers a custom Pokemon with optional image
- *
- * @param {Object} pokemonData - Pokemon data
- * @param {string} customImage - Optional custom image URL
- * @returns {boolean} Whether Pokemon was registered
+ * Registers custom Pokemon with optional image
  */
 export const initializePokemon = (pokemonData, customImage = null) => {
     if (!pokemonData || !pokemonData.name) return false;
@@ -61,16 +56,12 @@ export const initializePokemon = (pokemonData, customImage = null) => {
 };
 
 /**
- * Gets a single Pokemon by name or ID
- *
- * @param {string|number} idOrName - Pokemon ID or name
- * @param {boolean} suppressErrors - Whether to hide error messages
- * @returns {Object|null} Pokemon data or null if not found
+ * Gets Pokemon by name or ID with caching
  */
 export const getPokemon = async (idOrName, suppressErrors = false) => {
     if (!idOrName) return null;
 
-    // Skip database query for custom Pokemon
+    // Skip database for custom Pokemon
     if (PokemonCache.isCustomId(idOrName)) {
         console.log(
             `${idOrName} is a custom Pokemon ID, skipping database query`
@@ -79,7 +70,7 @@ export const getPokemon = async (idOrName, suppressErrors = false) => {
         return null;
     }
 
-    // Check if already known to be custom
+    // Check for known custom Pokemon
     if (PokemonCache.isCustomName(idOrName)) {
         console.log(
             `${idOrName} is a known custom Pokemon, skipping database query`
@@ -87,7 +78,7 @@ export const getPokemon = async (idOrName, suppressErrors = false) => {
         return null;
     }
 
-    // Get the Pokemon data
+    // Get Pokemon data
     const pokemon = await PokemonAPI.call(
         getPokemonAction,
         idOrName,
@@ -102,7 +93,7 @@ export const getPokemon = async (idOrName, suppressErrors = false) => {
         return null;
     }
 
-    // Format the Pokemon data for consistent structure
+    // Format Pokemon data
     return {
         id: formatPokemonId(pokemon.id),
         name: pokemon.name,
@@ -113,12 +104,7 @@ export const getPokemon = async (idOrName, suppressErrors = false) => {
 };
 
 /**
- * Gets a Pokemon's image
- *
- * @param {string} name - Pokemon name
- * @param {string|number} id - Pokemon ID
- * @param {string} customImage - Custom image URL
- * @returns {string} Image URL
+ * Gets Pokemon image with fallback and caching
  */
 export const getPokemonImage = async (name, id = null, customImage = null) => {
     // Return custom image if provided
@@ -134,13 +120,13 @@ export const getPokemonImage = async (name, id = null, customImage = null) => {
         return cachedImage;
     }
 
-    // Helper to cache and return default image
+    // Helper for default image
     const returnDefaultImage = () => {
         PokemonCache.cacheImage(name, QUESTION_MARK);
         return QUESTION_MARK;
     };
 
-    // Fast-path for known custom Pokemon
+    // Fast-path for custom Pokemon
     if (
         (id && PokemonCache.isCustomId(id)) ||
         PokemonCache.isCustomName(name)
@@ -150,13 +136,13 @@ export const getPokemonImage = async (name, id = null, customImage = null) => {
     }
 
     try {
-        // First get the Pokemon data to determine the ID
+        // Get Pokemon data for ID
         const pokemonData = await getPokemon(name);
         if (!pokemonData) {
             return returnDefaultImage();
         }
 
-        // Get Pokemon ID
+        // Extract numeric ID
         const pokemonId = id || pokemonData.id;
         const numId = parseInt(pokemonId.replace(/\D/g, ""));
 
@@ -164,7 +150,7 @@ export const getPokemonImage = async (name, id = null, customImage = null) => {
             return returnDefaultImage();
         }
 
-        // Get sprite from database
+        // Get sprite data
         const pokemonWithSprites = await PokemonAPI.call(
             getPokemonSpriteAction,
             numId,
@@ -173,7 +159,6 @@ export const getPokemonImage = async (name, id = null, customImage = null) => {
         );
 
         if (pokemonWithSprites && pokemonWithSprites.sprites) {
-            // Extract the best available sprite URL
             const spriteUrl = extractBestSpriteUrl(pokemonWithSprites.sprites);
             if (spriteUrl) {
                 PokemonCache.cacheImage(name, spriteUrl);
@@ -192,12 +177,7 @@ export const getPokemonImage = async (name, id = null, customImage = null) => {
 };
 
 /**
- * Gets a list of Pokemon with optional filtering
- *
- * @param {number} limit - Max number of results
- * @param {number} offset - Starting position
- * @param {Object} filters - Filter criteria
- * @returns {Array} List of Pokemon
+ * Gets Pokemon list with filtering and pagination
  */
 export const getPokemonList = async (limit = 20, offset = 0, filters = {}) => {
     return PokemonAPI.call(
@@ -209,10 +189,7 @@ export const getPokemonList = async (limit = 20, offset = 0, filters = {}) => {
 };
 
 /**
- * Gets featured Pokemon
- *
- * @param {number} count - Number of Pokemon to get
- * @returns {Array} Featured Pokemon
+ * Gets featured Pokemon that change daily
  */
 export const getFeaturedPokemon = async (count = 4) => {
     return PokemonAPI.call(
@@ -225,8 +202,6 @@ export const getFeaturedPokemon = async (count = 4) => {
 
 /**
  * Gets all Pokemon types
- *
- * @returns {Array} List of Pokemon types
  */
 export const getPokemonTypes = async () => {
     return PokemonAPI.call(
@@ -239,9 +214,6 @@ export const getPokemonTypes = async () => {
 
 /**
  * Gets complete data for explore page
- *
- * @param {Object} params - Query parameters
- * @returns {Object} Pokemon list, types, and featured Pokemon
  */
 export const getExplorePageData = async (params = {}) => {
     return PokemonAPI.call(
@@ -261,9 +233,6 @@ export const getExplorePageData = async (params = {}) => {
 
 /**
  * Gets complete data for home page
- *
- * @param {Object} params - Query parameters
- * @returns {Object} Featured Pokemon and Pokemon types
  */
 export const getHomePageData = async (params = {}) => {
     return PokemonAPI.call(
